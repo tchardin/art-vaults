@@ -22,7 +22,7 @@ export default function Home() {
 
         <div className={styles.grid}>
           <a href="#" className={styles.card}>
-            <h2>Create a new vault &rarr;</h2>
+            <h2>Upload your art work &rarr;</h2>
             <p>Store all assets for a digital artwork in a vault.</p>
           </a>
 
@@ -35,7 +35,7 @@ export default function Home() {
             href="#"
             className={styles.card}
           >
-            <h2>Share your vault &rarr;</h2>
+            <h2>Invite viewers &rarr;</h2>
             <p>Whitelist Ethereum accounts to get access to your vault.</p>
           </a>
 
