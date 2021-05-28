@@ -12,7 +12,12 @@ export default function Vault() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Nav title="Address" actionTitle="Submit" action={submitVault} />
+      <Nav
+        title="Vaults.art"
+        actionTitle="Submit"
+        action={submitVault}
+        username="0xajsalkfj3klfj23k3j23kf"
+      />
     </div>
   );
 }
