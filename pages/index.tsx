@@ -1,15 +1,19 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
+import Nav from '../components/Nav'
 
 export default function Home() {
+  const connectWallet = () => {}
   return (
     <div className={styles.container}>
       <Head>
-        <title>Art Vaults</title>
+        <title>Vaults.art</title>
         <meta name="description" content="Vaults for digital art." />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+
+      <Nav title="Vaults.art" actionTitle="Connect Wallet" action={connectWallet}/>
 
       <main className={styles.main}>
         <h1 className={styles.title}>
