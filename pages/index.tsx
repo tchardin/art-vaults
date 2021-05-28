@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useLayoutEffect } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -18,6 +18,9 @@ export default function Home() {
     setWalletOpen(false);
     router.push("/vault");
   };
+  useLayoutEffect(() => {
+    document.body.dataset.theme = "light";
+  }, []);
   return (
     <div className={styles.container}>
       <Head>
@@ -71,6 +74,7 @@ export default function Home() {
         action={newVault}
         onDismiss={() => setWalletOpen(false)}
         isOpen={isOpen}
+        center
       >
         <VaultIcon />
         <h2>Create Vault</h2>

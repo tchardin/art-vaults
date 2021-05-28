@@ -1,8 +1,100 @@
 .container {
   min-height: 100vh;
   padding: 0 0.5rem;
+  padding-top: 85px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+.containerSubmitted {
+  background-color:#0013BD;
+}
+
+.title {
+  margin: 0;
+}
+
+.subtitle {
+  color: var(--color-subtle);
+}
+
+.header {
+  padding-left: 22px;
+  margin-bottom: 32px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bottomGutter {
+  margin-bottom: 48px;
+}
+
+.items {
+  width: 100%;
+  max-width: 1024px;
+}
+
+.list {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.list > div {
+  position: absolute;
+  will-change: transform, width, height, opacity;
+  padding: 15px;
+}
+
+.list > div > div {
+  position: relative;
+  background-size: cover;
+  background-position: center center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  text-transform: uppercase;
+  font-size: 10px;
+  line-height: 10px;
+  border-radius: 4px;
+  box-shadow: 0px 10px 50px -10px rgba(0, 0, 0, 0.2);
+}
+
+.modalText {
+  opacity: var(--color-subtle);
+  line-height: 28px;
+  margin: 0;
+}
+
+.modalTitle {
+  color: var(--color-modal-text);
+  size: 54px;
+}
+
+.detailList {
+  list-style: none;
+  padding-inline-start: 0;
+}
+
+.detailList li {
+  weight: 400;
+  margin-bottom: 6px;
+}
+
+.addrRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.rmBtn {
+  color: #FF0000;
+  cursor: pointer;
 }

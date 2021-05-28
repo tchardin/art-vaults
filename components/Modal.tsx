@@ -8,12 +8,14 @@ type Props = {
   action: () => void;
   onDismiss: () => void;
   children: React.ReactNode;
+  center?: boolean;
 };
 
 export default function Modal({
   actionTitle,
   action,
   isOpen,
+  center,
   onDismiss,
   children,
 }: Props) {
@@ -28,10 +30,15 @@ export default function Modal({
         borderWidth: 3,
         borderColor: "#0013BD",
         borderStyle: "solid",
+        marginTop: "25vh",
       }}
     >
       <div className={styles.container}>
-        <div className={styles.content}>{children}</div>
+        <div
+          className={[styles.content, center ? styles.center : ""].join(" ")}
+        >
+          {children}
+        </div>
         <div className={styles.action}>
           <Button text={actionTitle} onClick={action} wide />
         </div>

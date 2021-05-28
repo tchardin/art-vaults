@@ -3,18 +3,24 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  background-color: var(--color-modal-bg);
+  color: var(--color-modal-text);
 }
 
 .content {
   display: flex;
   flex: 1;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
 }
 
 .action {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.center {
+  align-items: center;
+  text-align: center;
 }

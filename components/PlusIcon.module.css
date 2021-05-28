@@ -1,0 +1,7 @@
+.content {
+  cursor: pointer;
+}
+
+.content:hover {
+  fill: var(--color-accent);
+}
