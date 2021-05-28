@@ -1,4 +1,6 @@
-Art Vaults
+# Art Vaults
+
+> Virtual vaults for digital art.
 
 ## Getting Started
 
