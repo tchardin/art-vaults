@@ -1,0 +1,30 @@
+.btn {
+  display: block;
+  outline: none;
+  font-size: inherit;
+  font-family: inherit;
+  border: none;
+  appearance: none;
+  color: var(--color-btn-text);
+  height: 42px;
+  border-radius: 12px;
+  background-color: var(--color-accent);
+  cursor: pointer;
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.outline {
+  border: 2px solid var(--color-accent);
+  color: var(--color-accent);
+  background-color: transparent;
+}
+
+.wide {
+  width: 100%;
+}
