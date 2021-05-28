@@ -9,6 +9,7 @@ import useMeasure from "react-use-measure";
 import { useTransition, a } from "@react-spring/web";
 import Pill from "../components/Pill";
 import Button from "../components/Button";
+import TextInput from "../components/TextInput";
 
 type Tile = {
   url: string;
@@ -217,15 +218,22 @@ export default function Vault() {
             <h1>Share Vault</h1>
             <p className={styles.modalText}>
               Paste an ethereum address to grant access to view your vault. You
-              can revoke access at anytime.{" "}
+              can revoke access at anytime.
             </p>
+            <TextInput
+              onChange={(e: React.FormEvent<HTMLInputElement>) =>
+                setAddr(e.currentTarget.value)
+              }
+              value={addr}
+              placeholder="Ethereum Address"
+            />
           </>
         ) : modal == modals.SHARED ? (
           <>
             <h1>Vault Shared!</h1>
             <p>Your vault is now viewable by</p>
             <Pill text="0xajsalkfj3klfj23k3j23kf" />
-            <p>Manafe accent to your vault</p>
+            <p>Manage access to your vault</p>
             <Button text="Manage Access" onClick={manageAccess} />
           </>
         ) : modal == modals.MANAGE_ACCESS ? (

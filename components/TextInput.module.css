@@ -1,0 +1,12 @@
+.container {
+  height: 60px;
+  width: 100%;
+  border: 1px solid #EBEBEB;
+  border-radius: 12px;
+  outline: none;
+  text-align: center;
+}
+
+.container:hover {
+  border-color: #0013BD;
+}

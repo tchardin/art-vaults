@@ -70,6 +70,7 @@
   opacity: var(--color-subtle);
   line-height: 28px;
   margin: 0;
+  margin-bottom: 1em;
 }
 
 .modalTitle {
