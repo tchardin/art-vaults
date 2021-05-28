@@ -44,28 +44,28 @@ export default function Home() {
         <Button text="Create Vault" onClick={connectWallet} />
 
         <div className={styles.grid}>
-          <a href="#" className={styles.card}>
-            <h2>Upload your art work &rarr;</h2>
-            <p>Store all assets for a digital artwork in a vault.</p>
-          </a>
+          <div className={styles.card} onClick={connectWallet}>
+            <h2>⬆️ Upload your artwork</h2>
+            <p>Securely store all assets for a digital artwork in a vault.</p>
+          </div>
 
-          <a href="#" className={styles.card}>
-            <h2>Secure your vault &rarr;</h2>
+          <div className={styles.card} onClick={connectWallet}>
+            <h2>🗝 Secre your Vault</h2>
             <p>
               Freeze your art piece, upload the assets to Filecoin and register
               it as an NFT on the Ethereum blockchain.
             </p>
-          </a>
+          </div>
 
-          <a href="#" className={styles.card}>
-            <h2>Invite viewers &rarr;</h2>
-            <p>Whitelist Ethereum accounts to get access to your vault.</p>
-          </a>
+          <div className={styles.card} onClick={connectWallet}>
+            <h2>👀 Invite Viewers</h2>
+            <p>Whitelist Ethereum accounts to get access to view your vault.</p>
+          </div>
 
-          <a href="#" className={styles.card}>
-            <h2>Sell your vault &rarr;</h2>
+          <div className={styles.card} onClick={connectWallet}>
+            <h2>💰 Sell your vault </h2>
             <p>Distribute and sell your vault on NFT platforms.</p>
-          </a>
+          </div>
         </div>
       </main>
 
@@ -85,7 +85,7 @@ export default function Home() {
       </Modal>
 
       <footer className={styles.footer}>
-        <a href="#">© 2021 Art Vaults</a>
+        <p>This app is experimental, use at your own risk.</p>
       </footer>
     </div>
   );
