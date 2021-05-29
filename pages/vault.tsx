@@ -60,6 +60,8 @@ const modalBtnText = (state: ModalState): string => {
       return "Share Vault";
     case modals.SHARE:
       return "Share";
+    case modals.MANAGE_ACCESS:
+      return "Done";
     default:
       return "Continue";
   }

@@ -18,7 +18,8 @@ a {
 }
 
 body,
-body[data-theme="light"] {
+body[data-theme="light"],
+reach-portal {
   --color-bg: white;
   --color-modal-bg: white;
   --color-modal-text: black;
