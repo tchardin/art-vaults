@@ -161,7 +161,11 @@ export default function Vault() {
         actionTitle={secured ? "Share" : "Submit"}
         action={secured ? shareVault : submitVault}
         actionDisabled={!secured && items.length == 0}
-        username={web3.account ?? "unavailable"}
+        username={
+          web3.account
+            ? web3.account.name ?? web3.account.address
+            : "unavailable"
+        }
       />
 
       <input {...getInputProps()} />
