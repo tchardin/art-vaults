@@ -60,6 +60,19 @@ const modalBtnText = (state: ModalState): string => {
   }
 };
 
+const modalDismissText = (state: ModalState): string => {
+  switch (state) {
+    case modals.SUCCESS:
+      return "Dismiss";
+    case modals.SHARED:
+      return "Continue";
+    case modals.MANAGE_ACCESS:
+      return "Done";
+    default:
+      return "Cancel";
+  }
+};
+
 export default function Vault() {
   const [secured, setSecured] = useState(false);
   const [modal, setModal] = useState<ModalState>(modals.CLOSED);
@@ -88,6 +101,7 @@ export default function Vault() {
     setModal(modals.MANAGE_ACCESS);
   };
   const closeModal = () => {
+    setAddr("");
     setModal(modals.CLOSED);
   };
   const pasteAddress = () => {
@@ -183,6 +197,7 @@ export default function Vault() {
 
       <Modal
         actionTitle={modalBtnText(modal)}
+        dismissTitle={modalDismissText(modal)}
         action={
           modal == modals.SUBMIT
             ? secureVault
@@ -195,6 +210,8 @@ export default function Vault() {
         onDismiss={closeModal}
         isOpen={modal !== modals.CLOSED}
         center={modal == modals.SHARE}
+        disableAction={modal == modals.SHARE && addr === ""}
+        onlyDismiss={modal === modals.SHARED || modal === modals.MANAGE_ACCESS}
       >
         {modal == modals.SHARE ? (
           <>
@@ -219,7 +236,7 @@ export default function Vault() {
           <>
             <h1>Vault Shared!</h1>
             <p>Your vault is now viewable by</p>
-            <Pill text="0xajsalkfj3klfj23k3j23kf" />
+            <Pill text={addr} />
             <p>Manage access to your vault</p>
             <Button text="Manage Access" onClick={manageAccess} />
           </>

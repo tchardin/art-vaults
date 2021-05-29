@@ -24,3 +24,41 @@
   align-items: center;
   text-align: center;
 }
+
+.bottomBar {
+  height: 70px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  border-top: 1px solid #EBEBEB;
+  display: flex;
+}
+
+.bottomBar button {
+  font: inherit;
+  background-color: #fff;
+  border: none;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.divider {
+  height: 100%;
+  width: 1px;
+  background-color: #EBEBEB;
+}
+
+.primary {
+  color: #0013BD;
+}
+
+.disabled {
+  color: #808080;
+  opacity: 0.5;
+  cursor: not-allowed;
+}

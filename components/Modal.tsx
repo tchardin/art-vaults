@@ -7,8 +7,11 @@ type Props = {
   actionTitle: string;
   action: () => void;
   onDismiss: () => void;
+  dismissTitle?: string;
   children: React.ReactNode;
   center?: boolean;
+  disableAction?: boolean;
+  onlyDismiss?: boolean;
 };
 
 export default function Modal({
@@ -18,7 +21,11 @@ export default function Modal({
   center,
   onDismiss,
   children,
+  dismissTitle,
+  disableAction,
+  onlyDismiss,
 }: Props) {
+  console.log(onlyDismiss);
   return (
     <Dialog
       isOpen={isOpen}
@@ -27,10 +34,12 @@ export default function Modal({
         width: 460,
         height: 409,
         borderRadius: 20,
+        overflow: "hidden",
         borderWidth: 3,
         borderColor: "#0013BD",
         borderStyle: "solid",
         marginTop: "25vh",
+        position: "relative",
       }}
       aria-label={actionTitle}
     >
@@ -40,8 +49,23 @@ export default function Modal({
         >
           {children}
         </div>
-        <div className={styles.action}>
-          <Button text={actionTitle} onClick={action} wide />
+        <div className={styles.bottomBar}>
+          <button onClick={onDismiss}>{dismissTitle ?? "Cancel"}</button>
+          {!onlyDismiss && (
+            <>
+              <div className={styles.divider} />
+              <button
+                onClick={action}
+                className={[
+                  styles.primary,
+                  disableAction ? styles.disabled : "",
+                ].join(" ")}
+                disabled={disableAction}
+              >
+                {actionTitle}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </Dialog>
