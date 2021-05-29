@@ -6,6 +6,7 @@ type Props = {
   outline?: boolean;
   secondary?: boolean;
   disabled?: boolean;
+  destroy?: boolean;
   onClick: (evt: React.MouseEvent<HTMLElement>) => void;
 };
 
@@ -16,6 +17,7 @@ export default function Button({
   outline,
   disabled,
   secondary,
+  destroy,
 }: Props) {
   return (
     <button
@@ -25,6 +27,7 @@ export default function Button({
         outline ? styles.outline : "",
         disabled ? styles.disabled : "",
         secondary ? styles.secondary : "",
+        destroy ? styles.destroy : "",
       ].join(" ")}
       onClick={onClick}
       disabled={disabled}

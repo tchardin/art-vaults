@@ -4,17 +4,12 @@ import Head from "next/head";
 import Nav from "../components/Nav";
 import PlusIcon from "../components/PlusIcon";
 import Modal from "../components/Modal";
-import { useDropzone } from "react-dropzone";
-import useMeasure from "react-use-measure";
-import { useTransition, a } from "@react-spring/web";
+import { useDropzone, FileWithPath } from "react-dropzone";
 import Pill from "../components/Pill";
 import Button from "../components/Button";
 import TextInput from "../components/TextInput";
 import { useWeb3 } from "../components/Web3Provider";
-
-type Tile = {
-  url: string;
-};
+import Gallery, { Tile } from "../components/Gallery";
 
 const placeholders = [
   { url: "https://images.pexels.com/photos/416430/pexels-photo-416430.jpeg" },
@@ -32,8 +27,6 @@ const placeholders = [
   { url: "https://images.pexels.com/photos/310452/pexels-photo-310452.jpeg" },
   { url: "https://images.pexels.com/photos/380337/pexels-photo-380337.jpeg" },
 ];
-
-const height = 600;
 
 type ModalState =
   | "submit"
@@ -104,48 +97,36 @@ export default function Vault() {
     }
   };
 
-  const onDrop = useCallback((files: File[]) => {
-    console.log(files);
-    set(placeholders);
-    /* fetch("http://localhost:2001", { */
-    /*   method: "POST", */
-    /*   body: files[0], */
-    /* }) */
-    /*   .then((res) => setCid(res.headers.get("Ipfs-Hash"))) */
-    /*   .catch((err) => console.log(err)); */
-  }, []);
+  const [items, set] = useState<Tile[]>([]);
+  const onDrop = useCallback(
+    (files: FileWithPath[]) => {
+      console.log(files);
+      set([
+        ...items,
+        {
+          url: URL.createObjectURL(files[0]),
+          name: files[0].name,
+          fileType: files[0].type,
+        },
+      ]);
+      /* fetch("http://localhost:2001", { */
+      /*   method: "POST", */
+      /*   body: files[0], */
+      /* }) */
+      /*   .then((res) => setCid(res.headers.get("Ipfs-Hash"))) */
+      /*   .catch((err) => console.log(err)); */
+    },
+    [items]
+  );
+  const handleDelete = useCallback(
+    (item: Tile) => {
+      set(items.filter((el) => el.url != item.url));
+    },
+    [items]
+  );
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     noClick: true,
-  });
-
-  // Hook1: Tie media queries to the number of columns
-  const columns = 3;
-  // Hook2: Measure the width of the container element
-  const [ref, { width }] = useMeasure();
-  // Hook3: Hold items
-  const [items, set] = useState<Tile[]>([]);
-
-  // Hook5: Form a grid of stacked items using width & columns we got from hooks 1 & 2
-  const [heights, gridItems] = useMemo(() => {
-    let heights = new Array(columns).fill(0); // Each column gets a height starting with zero
-    let gridItems = items.map((child, i) => {
-      const column = heights.indexOf(Math.min(...heights)); // Basic masonry-grid placing, puts tile into the smallest column using Math.min
-      const x = (width / columns) * column; // x = container width / number of columns * column index,
-      const y = (heights[column] += height / 2) - height / 2; // y = it's just the height of the current column
-      return { ...child, x, y, width: width / columns, height: height / 2 };
-    });
-    return [heights, gridItems];
-  }, [columns, items, width]);
-  // Hook6: Turn the static grid values into animated transitions, any addition, removal or change will be animated
-  const transitions = useTransition(gridItems, {
-    key: (item: { css: string; height: number }) => item.css,
-    from: ({ x, y, width, height }) => ({ x, y, width, height, opacity: 0 }),
-    enter: ({ x, y, width, height }) => ({ x, y, width, height, opacity: 1 }),
-    update: ({ x, y, width, height }) => ({ x, y, width, height }),
-    leave: { height: 0, opacity: 0 },
-    config: { mass: 5, tension: 500, friction: 100 },
-    trail: 25,
   });
 
   return (
@@ -188,21 +169,7 @@ export default function Vault() {
               </p>
             </div>
           )}
-          <div
-            ref={ref}
-            className={styles.list}
-            style={{ height: Math.max(...heights) }}
-          >
-            {transitions((style, item) => (
-              <a.div key={item.url} style={style}>
-                <div
-                  style={{
-                    backgroundImage: `url(${item.url}?auto=compress&dpr=2&h=500&w=500)`,
-                  }}
-                />
-              </a.div>
-            ))}
-          </div>
+          <Gallery items={items} onDelete={handleDelete} />
         </div>
       ) : (
         <div className={styles.content}>
