@@ -4,6 +4,7 @@ type Props = {
   text: string;
   wide?: boolean;
   outline?: boolean;
+  secondary?: boolean;
   disabled?: boolean;
   onClick: (evt: React.MouseEvent<HTMLElement>) => void;
 };
@@ -14,6 +15,7 @@ export default function Button({
   wide,
   outline,
   disabled,
+  secondary,
 }: Props) {
   return (
     <button
@@ -22,6 +24,7 @@ export default function Button({
         wide ? styles.wide : "",
         outline ? styles.outline : "",
         disabled ? styles.disabled : "",
+        secondary ? styles.secondary : "",
       ].join(" ")}
       onClick={onClick}
       disabled={disabled}

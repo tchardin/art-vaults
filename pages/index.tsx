@@ -1,4 +1,4 @@
-import { useState, useLayoutEffect } from "react";
+import { useState, useLayoutEffect, useMemo } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -7,11 +7,17 @@ import Nav from "../components/Nav";
 import Modal from "../components/Modal";
 import Button from "../components/Button";
 import VaultIcon from "../components/VaultIcon";
+import { useWeb3 } from "../components/Web3Provider";
 
 export default function Home() {
   const router = useRouter();
   const [isOpen, setWalletOpen] = useState(false);
-  const connectWallet = () => {
+  const web3 = useWeb3();
+  const connectWallet = async () => {
+    await web3.connect();
+    newVault();
+  };
+  const startWallet = () => {
     setWalletOpen(true);
   };
   const newVault = () => {
@@ -32,7 +38,7 @@ export default function Home() {
       <Nav
         title="Vaults.art"
         actionTitle="Connect Wallet"
-        action={connectWallet}
+        action={startWallet}
       />
 
       <main className={styles.main}>
@@ -41,28 +47,28 @@ export default function Home() {
           Decentralized Storage for exclusive NFT content.{" "}
         </h1>
 
-        <Button text="Create Vault" onClick={connectWallet} />
+        <Button text="Create Vault" onClick={startWallet} />
 
         <div className={styles.grid}>
-          <div className={styles.card} onClick={connectWallet}>
+          <div className={styles.card} onClick={startWallet}>
             <h2>⬆️ Upload your artwork</h2>
             <p>Securely store all assets for a digital artwork in a vault.</p>
           </div>
 
-          <div className={styles.card} onClick={connectWallet}>
-            <h2>🗝 Secre your Vault</h2>
+          <div className={styles.card} onClick={startWallet}>
+            <h2>🗝 Secure your Vault</h2>
             <p>
               Freeze your art piece, upload the assets to Filecoin and register
               it as an NFT on the Ethereum blockchain.
             </p>
           </div>
 
-          <div className={styles.card} onClick={connectWallet}>
+          <div className={styles.card} onClick={startWallet}>
             <h2>👀 Invite Viewers</h2>
             <p>Whitelist Ethereum accounts to get access to view your vault.</p>
           </div>
 
-          <div className={styles.card} onClick={connectWallet}>
+          <div className={styles.card} onClick={startWallet}>
             <h2>💰 Sell your vault </h2>
             <p>Distribute and sell your vault on NFT platforms.</p>
           </div>
@@ -71,7 +77,7 @@ export default function Home() {
 
       <Modal
         actionTitle="Connect Wallet"
-        action={newVault}
+        action={connectWallet}
         onDismiss={() => setWalletOpen(false)}
         isOpen={isOpen}
         center

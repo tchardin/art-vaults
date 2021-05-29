@@ -93,9 +93,15 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  margin-bottom: 8px;
 }
 
 .rmBtn {
   color: #FF0000;
   cursor: pointer;
+}
+
+.addrInput {
+  margin-bottom: 10px;
+  width: 100%;
 }

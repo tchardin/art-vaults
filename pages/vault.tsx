@@ -1,4 +1,4 @@
-import { useCallback, useState, useMemo, useEffect } from "react";
+import { useCallback, useState, useMemo, useEffect, useRef } from "react";
 import styles from "./Vault.module.css";
 import Head from "next/head";
 import Nav from "../components/Nav";
@@ -10,6 +10,7 @@ import { useTransition, a } from "@react-spring/web";
 import Pill from "../components/Pill";
 import Button from "../components/Button";
 import TextInput from "../components/TextInput";
+import { useWeb3 } from "../components/Web3Provider";
 
 type Tile = {
   url: string;
@@ -59,6 +60,8 @@ const modalBtnText = (state: ModalState): string => {
       return "Share Vault";
     case modals.SHARE:
       return "Share";
+    case modals.MANAGE_ACCESS:
+      return "Done";
     default:
       return "Continue";
   }
@@ -68,7 +71,10 @@ export default function Vault() {
   const [secured, setSecured] = useState(false);
   const [modal, setModal] = useState<ModalState>(modals.CLOSED);
   const [whitelist, setWhitelist] = useState<string[]>([]);
-  const [addr, setAddr] = useState("0xajsalkfj3klfj23k3j23kf");
+  const addrInput = useRef() as React.MutableRefObject<HTMLInputElement>;
+  const web3 = useWeb3();
+
+  const [addr, setAddr] = useState("");
 
   const submitVault = () => {
     setModal(modals.SUBMIT);
@@ -90,6 +96,12 @@ export default function Vault() {
   };
   const closeModal = () => {
     setModal(modals.CLOSED);
+  };
+  const pasteAddress = () => {
+    if (typeof addrInput.current !== "undefined") {
+      navigator.clipboard.readText().then((txt) => setAddr(txt));
+      addrInput.current.focus();
+    }
   };
 
   const onDrop = useCallback((files: File[]) => {
@@ -149,7 +161,11 @@ export default function Vault() {
         actionTitle={secured ? "Share" : "Submit"}
         action={secured ? shareVault : submitVault}
         actionDisabled={!secured && items.length == 0}
-        username="0xajsalkfj3klfj23k3j23kf"
+        username={
+          web3.account
+            ? web3.account.name ?? web3.account.address
+            : "unavailable"
+        }
       />
 
       <input {...getInputProps()} />
@@ -220,13 +236,17 @@ export default function Vault() {
               Paste an ethereum address to grant access to view your vault. You
               can revoke access at anytime.
             </p>
-            <TextInput
-              onChange={(e: React.FormEvent<HTMLInputElement>) =>
-                setAddr(e.currentTarget.value)
-              }
-              value={addr}
-              placeholder="Ethereum Address"
-            />
+            <div className={styles.addrInput}>
+              <TextInput
+                onChange={(e: React.FormEvent<HTMLInputElement>) =>
+                  setAddr(e.currentTarget.value)
+                }
+                value={addr}
+                placeholder="Ethereum Address"
+                ref={addrInput}
+              />
+            </div>
+            <Button text="Paste Address" onClick={pasteAddress} secondary />
           </>
         ) : modal == modals.SHARED ? (
           <>

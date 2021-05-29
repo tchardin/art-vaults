@@ -32,6 +32,7 @@ export default function Modal({
         borderStyle: "solid",
         marginTop: "25vh",
       }}
+      aria-label={actionTitle}
     >
       <div className={styles.container}>
         <div
