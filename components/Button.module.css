@@ -10,8 +10,9 @@
   border-radius: 12px;
   background-color: var(--color-accent);
   cursor: pointer;
-  padding-left: 1em;
-  padding-right: 1em;
+  padding-left: 1.5em;
+  padding-right: 1.5em;
+  font-size: 16px;
 }
 
 .disabled {
@@ -32,4 +33,9 @@
 .secondary {
   background-color: var(--color-btn-secondary);
   color: var(--color-btn-secondary-text);
+}
+
+.destroy {
+  background-color: #fff;
+  color: #FF0000;
 }
