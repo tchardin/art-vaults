@@ -99,3 +99,8 @@
   color: #FF0000;
   cursor: pointer;
 }
+
+.addrInput {
+  margin-bottom: 10px;
+  width: 100%;
+}

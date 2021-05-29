@@ -28,3 +28,8 @@
 .wide {
   width: 100%;
 }
+
+.secondary {
+  background-color: var(--color-btn-secondary);
+  color: var(--color-btn-secondary-text);
+}

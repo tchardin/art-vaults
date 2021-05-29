@@ -24,6 +24,8 @@ body[data-theme="light"] {
   --color-modal-text: black;
   --color-text: black;
   --color-btn-text: #fefefe;
+  --color-btn-secondary: #E6E6E6;
+  --color-btn-secondary-text: #808080;
   --color-accent: #0013BD;
   --color-subtle: #6E7898;
 }
@@ -36,4 +38,6 @@ body[data-theme="blue"] {
   --color-accent: white;
   --color-subtle: rgba(355, 355, 355, 0.3);
   --color-btn-text: #0013BD;
+  --color-btn-secondary: #E6E6E6;
+  --color-btn-secondary-text: #808080;
 }
