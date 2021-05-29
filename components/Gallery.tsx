@@ -1,23 +1,19 @@
 import { useMemo, memo } from "react";
 import useMeasure from "react-use-measure";
 import { useTransition, a } from "@react-spring/web";
+import { FileWithPath } from "react-dropzone";
 import styles from "./Gallery.module.css";
 import GalleryItem from "./GalleryItem";
 
-export type Tile = {
-  url: string;
-  name: string;
-  fileType: string;
-};
-
 type Props = {
-  items: Tile[];
-  onDelete: (item: Tile) => void;
+  items: FileWithPath[];
+  deletable: boolean;
+  onDelete: (item: FileWithPath) => void;
 };
 
 const height = 600;
 
-export default memo(function Gallery({ items, onDelete }: Props) {
+export default memo(function Gallery({ items, onDelete, deletable }: Props) {
   const columns = 3;
   const [ref, { width }] = useMeasure();
 
@@ -27,7 +23,7 @@ export default memo(function Gallery({ items, onDelete }: Props) {
       const column = heights.indexOf(Math.min(...heights)); // Basic masonry-grid placing, puts tile into the smallest column using Math.min
       const x = (width / columns) * column; // x = container width / number of columns * column index,
       const y = (heights[column] += height / 2) - height / 2; // y = it's just the height of the current column
-      return { ...child, x, y, width: width / columns, height: height / 2 };
+      return { item: child, x, y, width: width / columns, height: height / 2 };
     });
     return [heights, gridItems];
   }, [columns, items, width]);
@@ -48,13 +44,12 @@ export default memo(function Gallery({ items, onDelete }: Props) {
       className={styles.list}
       style={{ height: Math.max(...heights) }}
     >
-      {transitions((style, item: Tile) => (
-        <a.div key={item.url} style={style}>
+      {transitions((style, { item }) => (
+        <a.div key={item.name} style={style}>
           <GalleryItem
-            url={item.url}
-            name={item.name}
-            fileType={item.fileType}
+            item={item}
             onDelete={() => onDelete(item)}
+            deletable={deletable}
           />
         </a.div>
       ))}

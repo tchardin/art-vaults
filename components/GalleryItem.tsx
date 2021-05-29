@@ -1,11 +1,12 @@
+import { useMemo } from "react";
+import { FileWithPath } from "react-dropzone";
 import styles from "./GalleryItem.module.css";
 import useHover from "./useHover";
 import Button from "./Button";
 
 type Props = {
-  url: string;
-  name: string;
-  fileType: string;
+  item: FileWithPath;
+  deletable: boolean;
   onDelete: () => void;
 };
 
@@ -28,28 +29,28 @@ const imgName = (type: string): string => {
   return "." + name;
 };
 
-export default function GalleryItem({ url, name, fileType, onDelete }: Props) {
-  const [hovered, handlers] = useHover(false);
+export default function GalleryItem({ item, onDelete, deletable }: Props) {
+  const url = useMemo(() => URL.createObjectURL(item), [item]);
+  const [hovered, handlers] = useHover(!deletable);
   const btn = (
     <div className={styles.delete}>
       <Button text="Delete" onClick={onDelete} destroy />
     </div>
   );
-  return supportsPreview[fileType] ? (
+  return supportsPreview[item.type] ? (
     <div
       className={styles.item}
       style={{ backgroundImage: `url(${url})` }}
       role="img"
-      aria-label={name}
+      aria-label={item.name}
       {...handlers}
     >
       {hovered && btn}
     </div>
   ) : (
     <div className={[styles.item, styles.placeholder].join(" ")} {...handlers}>
-      <span className={styles.type}>{imgName(fileType)}</span>
+      <span className={styles.type}>{imgName(item.type)}</span>
       {hovered && btn}
     </div>
   );
-  /* <div style={{ backgroundImage: `url(${url})` }} className={styles.item} /> */
 }

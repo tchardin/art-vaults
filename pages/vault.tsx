@@ -9,24 +9,7 @@ import Pill from "../components/Pill";
 import Button from "../components/Button";
 import TextInput from "../components/TextInput";
 import { useWeb3 } from "../components/Web3Provider";
-import Gallery, { Tile } from "../components/Gallery";
-
-const placeholders = [
-  { url: "https://images.pexels.com/photos/416430/pexels-photo-416430.jpeg" },
-  { url: "https://images.pexels.com/photos/1103970/pexels-photo-1103970.jpeg" },
-  { url: "https://images.pexels.com/photos/911738/pexels-photo-911738.jpeg" },
-  { url: "https://images.pexels.com/photos/358574/pexels-photo-358574.jpeg" },
-  { url: "https://images.pexels.com/photos/1738986/pexels-photo-1738986.jpeg" },
-  { url: "https://images.pexels.com/photos/96381/pexels-photo-96381.jpeg" },
-  { url: "https://images.pexels.com/photos/1005644/pexels-photo-1005644.jpeg" },
-  { url: "https://images.pexels.com/photos/227675/pexels-photo-227675.jpeg" },
-  { url: "https://images.pexels.com/photos/325185/pexels-photo-325185.jpeg" },
-  { url: "https://images.pexels.com/photos/327482/pexels-photo-327482.jpeg" },
-  { url: "https://images.pexels.com/photos/2736834/pexels-photo-2736834.jpeg" },
-  { url: "https://images.pexels.com/photos/249074/pexels-photo-249074.jpeg" },
-  { url: "https://images.pexels.com/photos/310452/pexels-photo-310452.jpeg" },
-  { url: "https://images.pexels.com/photos/380337/pexels-photo-380337.jpeg" },
-];
+import Gallery from "../components/Gallery";
 
 type ModalState =
   | "submit"
@@ -79,16 +62,12 @@ export default function Vault() {
   const [whitelist, setWhitelist] = useState<string[]>([]);
   const addrInput = useRef() as React.MutableRefObject<HTMLInputElement>;
   const web3 = useWeb3();
+  const [items, set] = useState<FileWithPath[]>([]);
 
   const [addr, setAddr] = useState("");
 
   const submitVault = () => {
     setModal(modals.SUBMIT);
-  };
-  const secureVault = () => {
-    setModal(modals.SUCCESS);
-    setSecured(true);
-    document.body.dataset.theme = "blue";
   };
   const sharedVault = () => {
     setModal(modals.SHARED);
@@ -111,30 +90,42 @@ export default function Vault() {
     }
   };
 
-  const [items, set] = useState<Tile[]>([]);
+  const upload = async (items: File[]): Promise<string> => {
+    const body = new FormData();
+    items.forEach((item) => body.append("file", item, item.name));
+
+    const response = await fetch("http://localhost:2001", {
+      method: "POST",
+      body,
+    });
+    const root = response.headers.get("Ipfs-Hash");
+    if (!root) {
+      throw "no CID";
+    }
+    return root;
+  };
+
+  const secureVault = async () => {
+    try {
+      const root = await upload(items);
+      setModal(modals.SUCCESS);
+      setSecured(true);
+      document.body.dataset.theme = "blue";
+    } catch (e) {
+      // TODO: show error
+      console.log(e);
+    }
+  };
+
   const onDrop = useCallback(
     (files: FileWithPath[]) => {
-      console.log(files);
-      set([
-        ...items,
-        {
-          url: URL.createObjectURL(files[0]),
-          name: files[0].name,
-          fileType: files[0].type,
-        },
-      ]);
-      /* fetch("http://localhost:2001", { */
-      /*   method: "POST", */
-      /*   body: files[0], */
-      /* }) */
-      /*   .then((res) => setCid(res.headers.get("Ipfs-Hash"))) */
-      /*   .catch((err) => console.log(err)); */
+      set([...items, files[0]]);
     },
     [items]
   );
   const handleDelete = useCallback(
-    (item: Tile) => {
-      set(items.filter((el) => el.url != item.url));
+    (item: FileWithPath) => {
+      set(items.filter((el) => el.name != item.name));
     },
     [items]
   );
@@ -183,7 +174,7 @@ export default function Vault() {
               </p>
             </div>
           )}
-          <Gallery items={items} onDelete={handleDelete} />
+          <Gallery items={items} onDelete={handleDelete} deletable={!secured} />
         </div>
       ) : (
         <div className={styles.content}>
