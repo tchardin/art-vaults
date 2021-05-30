@@ -16,11 +16,10 @@ export default function Home() {
   const connectWallet = async () => {
     try {
       await web3.connect();
+      console.log("connected");
       newVault();
     } catch (e) {
-      if (e.code == 4001) {
-        console.log("rejected");
-      }
+      console.log(e);
     }
   };
   const startWallet = () => {
