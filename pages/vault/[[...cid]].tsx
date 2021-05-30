@@ -20,6 +20,7 @@ import TextInput from "../../components/TextInput";
 import { useWeb3 } from "../../components/Web3Provider";
 import Gallery from "../../components/Gallery";
 import GalleryItem, { VaultItem } from "../../components/GalleryItem";
+import { ROOT, jsonFetcher, txtFetcher } from "../../lib/fetchers";
 
 type ModalState =
   | "submit"
@@ -78,10 +79,11 @@ const modalDismissText = (state: ModalState): string => {
   }
 };
 
-const ROOT = process.env.NEXT_PUBLIC_MYEL_NODE ?? "";
-
-const fetcher = (root: string) =>
-  fetch(ROOT + "/" + root).then((res) => res.json());
+const nonFileItems: { [key: string]: boolean } = {
+  username: true,
+  preview: true,
+  "": true,
+};
 
 export default function Vault() {
   const [modal, setModal] = useState<ModalState>(modals.CLOSED);
@@ -93,26 +95,52 @@ export default function Vault() {
   const [preview, setPreview] = useState<VaultItem>();
   const {
     push,
+    replace,
     query: { cid: root },
   } = useRouter();
-  const [secured, setSecured] = useState(() => !!root && root.length > 0);
 
-  const { data, error } = useSWR<string[]>(root?.[0] ?? null, fetcher);
+  const [secured, setSecured] = useState(false);
+
+  useEffect(() => {
+    if (!web3.account) {
+      replace("/");
+    }
+    if (root?.[0]) {
+      setSecured(true);
+    }
+  }, [root?.[0], web3.account]);
+
+  const { data, error } = useSWR<string[]>(root?.[0] ?? null, jsonFetcher);
   const [items, set] = useState<VaultItem[]>([]);
   const [err, setErr] = useState<string>();
+
+  const { data: creator } = useSWR<string>(
+    root?.[0] ? root[0] + "/username" : null,
+    txtFetcher
+  );
+
+  const isOwner = useMemo(
+    () => !!creator && creator == web3.account?.address,
+    [creator, web3.account?.address]
+  );
 
   // If the vault is secured, the item keys are loaded from the API
   // else they are in the local state
   const vaultItems = useMemo(
-    () => (secured ? data?.map((key) => ({ name: key })) || [] : items),
+    () =>
+      secured
+        ? data
+            ?.filter((key) => !nonFileItems[key])
+            .map((key) => ({ name: key })) || []
+        : items,
     [data, secured, items]
   );
 
   useLayoutEffect(() => {
-    if (secured) {
+    if (isOwner) {
       document.body.dataset.theme = "blue";
     }
-  }, [secured]);
+  }, [isOwner]);
 
   const submitVault = () => {
     setModal(modals.SUBMIT);
@@ -145,10 +173,13 @@ export default function Vault() {
   };
 
   const upload = async (items: File[]): Promise<string> => {
-    if (!ROOT) {
+    if (!ROOT || !web3.account?.address) {
       return "";
     }
     const body = new FormData();
+    // Set the user account
+    body.append("username", web3.account?.address);
+    body.append("preview", preview?.name ?? "*");
     items.forEach((item) => body.append("file", item, item.name));
 
     const response = await fetch(ROOT, {
@@ -200,7 +231,7 @@ export default function Vault() {
     onDrop,
     noClick: true,
   });
-
+  const shareLink = "vaults.art/?v=" + root;
   console.log(vaultItems);
 
   return (
@@ -281,7 +312,11 @@ export default function Vault() {
         loading={modal === modals.PROCESSING}
         center={modal === modals.SHARE || modal === modals.CONFIRM_PREVIEW}
         disableAction={modal == modals.SHARE && addr === ""}
-        onlyDismiss={modal === modals.SHARED || modal === modals.MANAGE_ACCESS}
+        onlyDismiss={
+          modal === modals.SHARED ||
+          modal === modals.MANAGE_ACCESS ||
+          modal === modals.SELECT_PREVIEW
+        }
       >
         {modal === modals.SHARE ? (
           <>
@@ -309,6 +344,13 @@ export default function Vault() {
             <Pill text={addr} />
             <p>Manage access to your vault</p>
             <Button text="Manage Access" onClick={manageAccess} />
+            <p>Share this link to let them know they have access</p>
+            <div
+              className={styles.link}
+              onClick={() => navigator.clipboard.writeText(shareLink)}
+            >
+              {shareLink}
+            </div>
           </>
         ) : modal === modals.MANAGE_ACCESS ? (
           <>

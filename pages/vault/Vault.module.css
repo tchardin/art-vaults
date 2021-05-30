@@ -90,3 +90,13 @@
   margin-bottom: 12px;
 }
 
+.link {
+  color: var(--color-accent);
+  text-decoration: underline;
+  word-break: keep-all;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  cursor: pointer;
+}
+

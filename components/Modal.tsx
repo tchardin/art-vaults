@@ -34,7 +34,7 @@ export default function Modal({
       onDismiss={onDismiss}
       style={{
         width: 460,
-        height: 420,
+        height: 480,
         borderRadius: 20,
         overflow: "hidden",
         borderWidth: 3,
