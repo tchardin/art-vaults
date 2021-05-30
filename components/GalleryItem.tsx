@@ -13,7 +13,9 @@ type Props = {
   item: VaultItem;
   rootURL?: string;
   deletable: boolean;
-  onDelete: () => void;
+  selectable: boolean;
+  onSelect: () => void;
+  noPreview?: boolean;
 };
 
 const supportsPreview: { [key: string]: boolean } = {
@@ -51,8 +53,10 @@ const imgName = (type: string): string => {
 
 export default function GalleryItem({
   item,
-  onDelete,
+  onSelect,
   deletable,
+  selectable,
+  noPreview,
   rootURL,
 }: Props) {
   const url = useMemo(
@@ -61,9 +65,28 @@ export default function GalleryItem({
     [item]
   );
   const [hovered, handlers] = useHover(!deletable);
+  const onClick = () => {
+    if (selectable) {
+      onSelect();
+    }
+  };
+  if (noPreview) {
+    return (
+      <div
+        className={[
+          styles.item,
+          styles.empty,
+          selectable ? styles.select : "",
+        ].join(" ")}
+        onClick={onClick}
+      >
+        <span className={styles.noPreview}>No preview</span>
+      </div>
+    );
+  }
   const btn = (
     <div className={styles.delete}>
-      <Button text="Delete" onClick={onDelete} destroy />
+      <Button text="Delete" onClick={onSelect} destroy />
     </div>
   );
 
@@ -71,16 +94,25 @@ export default function GalleryItem({
 
   return supportsPreview[type] ? (
     <div
-      className={styles.item}
+      className={[styles.item, selectable ? styles.select : ""].join(" ")}
       style={{ backgroundImage: `url("${url}")` }}
       role="img"
       aria-label={item.name}
+      onClick={onClick}
       {...handlers}
     >
       {hovered && btn}
     </div>
   ) : (
-    <div className={[styles.item, styles.placeholder].join(" ")} {...handlers}>
+    <div
+      className={[
+        styles.item,
+        styles.placeholder,
+        selectable ? styles.select : "",
+      ].join(" ")}
+      onClick={onClick}
+      {...handlers}
+    >
       <span className={styles.type}>{imgName(type)}</span>
       {hovered && btn}
     </div>

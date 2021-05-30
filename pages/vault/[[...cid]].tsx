@@ -1,4 +1,11 @@
-import { useCallback, useState, useMemo, useEffect, useRef } from "react";
+import {
+  useCallback,
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+} from "react";
 import styles from "./Vault.module.css";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -12,7 +19,7 @@ import Button from "../../components/Button";
 import TextInput from "../../components/TextInput";
 import { useWeb3 } from "../../components/Web3Provider";
 import Gallery from "../../components/Gallery";
-import { VaultItem } from "../../components/GalleryItem";
+import GalleryItem, { VaultItem } from "../../components/GalleryItem";
 
 type ModalState =
   | "submit"
@@ -20,7 +27,11 @@ type ModalState =
   | "share"
   | "closed"
   | "shared"
-  | "manage_access";
+  | "manage_access"
+  | "processing"
+  | "error"
+  | "select_preview"
+  | "confirm_preview";
 
 const modals: { [key: string]: ModalState } = {
   CLOSED: "closed",
@@ -29,12 +40,20 @@ const modals: { [key: string]: ModalState } = {
   SHARE: "share",
   SHARED: "shared",
   MANAGE_ACCESS: "manage_access",
+  PROCESSING: "processing",
+  ERROR: "error",
+  SELECT_PREVIEW: "select_preview",
+  CONFIRM_PREVIEW: "confirm_preview",
 };
 
 const modalBtnText = (state: ModalState): string => {
   switch (state) {
-    case modals.SUBMIT:
+    case modals.CONFIRM_PREVIEW:
       return "Secure Vault";
+    case modals.ERROR:
+      return "Try again";
+    case modals.SUBMIT:
+      return "Continue";
     case modals.SUCCESS:
       return "Share Vault";
     case modals.SHARE:
@@ -71,13 +90,16 @@ export default function Vault() {
   const web3 = useWeb3();
 
   const [addr, setAddr] = useState("");
+  const [preview, setPreview] = useState<VaultItem>();
   const {
+    push,
     query: { cid: root },
   } = useRouter();
   const [secured, setSecured] = useState(() => !!root && root.length > 0);
 
   const { data, error } = useSWR<string[]>(root?.[0] ?? null, fetcher);
   const [items, set] = useState<VaultItem[]>([]);
+  const [err, setErr] = useState<string>();
 
   // If the vault is secured, the item keys are loaded from the API
   // else they are in the local state
@@ -85,6 +107,12 @@ export default function Vault() {
     () => (secured ? data?.map((key) => ({ name: key })) || [] : items),
     [data, secured, items]
   );
+
+  useLayoutEffect(() => {
+    if (secured) {
+      document.body.dataset.theme = "blue";
+    }
+  }, [secured]);
 
   const submitVault = () => {
     setModal(modals.SUBMIT);
@@ -99,6 +127,12 @@ export default function Vault() {
   const manageAccess = () => {
     setModal(modals.MANAGE_ACCESS);
   };
+  const selectPreview = () => {
+    setModal(modals.SELECT_PREVIEW);
+  };
+  const confirmPreview = () => {
+    setModal(modals.CONFIRM_PREVIEW);
+  };
   const closeModal = () => {
     setAddr("");
     setModal(modals.CLOSED);
@@ -111,6 +145,9 @@ export default function Vault() {
   };
 
   const upload = async (items: File[]): Promise<string> => {
+    if (!ROOT) {
+      return "";
+    }
     const body = new FormData();
     items.forEach((item) => body.append("file", item, item.name));
 
@@ -118,24 +155,28 @@ export default function Vault() {
       method: "POST",
       body,
     });
-    const root = response.headers.get("Ipfs-Hash");
-    if (!root) {
-      throw "no CID";
+    const rootCID = response.headers.get("Ipfs-Hash");
+    if (!rootCID) {
+      return "";
     }
-    return root;
+    return rootCID;
   };
 
   const secureVault = async () => {
+    setModal(modals.PROCESSING);
+    // artificial delay for now
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
     const files: File[] = [];
     items.forEach((item) => item.file && files.push(item.file));
     try {
       const root = await upload(files);
+      push(root ? "/vault/" + root : "/fault");
       setModal(modals.SUCCESS);
       setSecured(true);
-      document.body.dataset.theme = "blue";
     } catch (e) {
-      // TODO: show error
-      console.log(e);
+      setErr(e.toString());
+      setModal(modals.ERROR);
     }
   };
 
@@ -151,6 +192,10 @@ export default function Vault() {
     },
     [items]
   );
+  const handleSelect = useCallback((item: VaultItem) => {
+    setPreview(item);
+    setModal(modals.CONFIRM_PREVIEW);
+  }, []);
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     noClick: true,
@@ -169,7 +214,7 @@ export default function Vault() {
       <Nav
         title="Vaults.art"
         actionTitle={secured ? "Share" : "Submit"}
-        action={secured ? shareVault : submitVault}
+        action={secured ? shareVault : selectPreview}
         actionDisabled={!secured && items.length == 0}
         username={
           web3.account
@@ -200,7 +245,7 @@ export default function Vault() {
           )}
           <Gallery
             items={vaultItems}
-            onDelete={handleDelete}
+            onSelect={handleDelete}
             deletable={!secured}
             rootURL={secured ? ROOT + "/" + root?.[0] : undefined}
           />
@@ -219,21 +264,26 @@ export default function Vault() {
         actionTitle={modalBtnText(modal)}
         dismissTitle={modalDismissText(modal)}
         action={
-          modal == modals.SUBMIT
+          modal === modals.SUBMIT
             ? secureVault
-            : modal == modals.SUCCESS
+            : modal === modals.CONFIRM_PREVIEW
+            ? submitVault
+            : modal === modals.SUCCESS
             ? shareVault
-            : modal == modals.SHARE
+            : modal === modals.SHARE
             ? sharedVault
+            : modal === modals.ERROR
+            ? submitVault
             : closeModal
         }
         onDismiss={closeModal}
         isOpen={modal !== modals.CLOSED}
-        center={modal == modals.SHARE}
+        loading={modal === modals.PROCESSING}
+        center={modal === modals.SHARE || modal === modals.CONFIRM_PREVIEW}
         disableAction={modal == modals.SHARE && addr === ""}
         onlyDismiss={modal === modals.SHARED || modal === modals.MANAGE_ACCESS}
       >
-        {modal == modals.SHARE ? (
+        {modal === modals.SHARE ? (
           <>
             <h1>Share Vault</h1>
             <p className={styles.modalText}>
@@ -252,7 +302,7 @@ export default function Vault() {
             </div>
             <Button text="Paste Address" onClick={pasteAddress} secondary />
           </>
-        ) : modal == modals.SHARED ? (
+        ) : modal === modals.SHARED ? (
           <>
             <h1>Vault Shared!</h1>
             <p>Your vault is now viewable by</p>
@@ -260,7 +310,7 @@ export default function Vault() {
             <p>Manage access to your vault</p>
             <Button text="Manage Access" onClick={manageAccess} />
           </>
-        ) : modal == modals.MANAGE_ACCESS ? (
+        ) : modal === modals.MANAGE_ACCESS ? (
           <>
             <h1>Manage access</h1>
             <p>Whitelisted addresses</p>
@@ -281,6 +331,48 @@ export default function Vault() {
                 </div>
               </div>
             ))}
+          </>
+        ) : modal === modals.SELECT_PREVIEW ? (
+          <>
+            <h2>Please select a preview for your Vault</h2>
+            <Gallery
+              items={vaultItems}
+              deletable={false}
+              selectable
+              onSelect={handleSelect}
+            />
+          </>
+        ) : modal === modals.CONFIRM_PREVIEW ? (
+          <>
+            <h2>Confirm Preview Selection</h2>
+            <div className={styles.selectedPreview}>
+              <GalleryItem
+                item={preview as VaultItem}
+                noPreview={preview?.name === "*"}
+                selectable={false}
+                deletable={false}
+                onSelect={() => {}}
+              />
+            </div>
+            <Button text="Edit Cover" onClick={selectPreview} secondary />
+          </>
+        ) : modal === modals.PROCESSING ? (
+          <>
+            <h1>Processing...</h1>
+            <p>Your vault is being uploaded onto Filecoin Storage.</p>
+            <p>
+              This can take a couple minutes as it involves submitting a
+              transaction on the blockchain.
+            </p>
+          </>
+        ) : modal === modals.ERROR ? (
+          <>
+            <h1>Oh no!</h1>
+            <p className={styles.errMsg}>{err}</p>
+            <p>
+              This could be due to your network fee not being high enough or
+              congestion on our network. Please try again!
+            </p>
           </>
         ) : secured ? (
           <>

@@ -75,7 +75,18 @@
   cursor: pointer;
 }
 
+.errMsg {
+  color: #FF0000;
+}
+
 .addrInput {
   margin-bottom: 10px;
   width: 100%;
 }
+
+.selectedPreview {
+  height: 180px;
+  width: 180px;
+  margin-bottom: 12px;
+}
+

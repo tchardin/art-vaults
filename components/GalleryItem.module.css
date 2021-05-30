@@ -18,6 +18,13 @@
   justify-content: center;
 }
 
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 1px #EBEBEB;  
+}
+
 .type {
   color: #0013BD;
   font-size: 54px;
@@ -27,4 +34,17 @@
   position: absolute;
   bottom: 11px;
   right: 11px;
+}
+
+.select {
+  cursor: pointer;
+}
+
+.select:hover {
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+.noPreview {
+  color: var(--color-btn-secondary-text);
+  text-align: center;
 }
