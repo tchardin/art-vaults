@@ -83,6 +83,11 @@ const ROOT = process.env.NEXT_PUBLIC_MYEL_NODE ?? "";
 const fetcher = (root: string) =>
   fetch(ROOT + "/" + root).then((res) => res.json());
 
+const nonFileItems: { [key: string]: boolean } = {
+  username: true,
+  "": true,
+};
+
 export default function Vault() {
   const [modal, setModal] = useState<ModalState>(modals.CLOSED);
   const [whitelist, setWhitelist] = useState<string[]>([]);
@@ -104,7 +109,12 @@ export default function Vault() {
   // If the vault is secured, the item keys are loaded from the API
   // else they are in the local state
   const vaultItems = useMemo(
-    () => (secured ? data?.map((key) => ({ name: key })) || [] : items),
+    () =>
+      secured
+        ? data
+            ?.filter((key) => !nonFileItems[key])
+            .map((key) => ({ name: key })) || []
+        : items,
     [data, secured, items]
   );
 
@@ -145,10 +155,12 @@ export default function Vault() {
   };
 
   const upload = async (items: File[]): Promise<string> => {
-    if (!ROOT) {
+    if (!ROOT || !web3.account?.address) {
       return "";
     }
     const body = new FormData();
+    // Set the user account
+    body.append("username", web3.account?.address);
     items.forEach((item) => body.append("file", item, item.name));
 
     const response = await fetch(ROOT, {
