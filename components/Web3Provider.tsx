@@ -33,61 +33,55 @@ export default function Web3Provider({ children }: Web3ProviderProps) {
   const [provider, setProvider] = useState<Web3 | null>(null);
 
   const connect = async () => {
-    try {
-      const ethereum: providers.ExternalProvider = (window as any).ethereum;
-      if (typeof ethereum != "undefined") {
-        const accounts = await ethereum.request?.({
-          method: "eth_requestAccounts",
-        });
-        if (accounts.length == 0) {
-          console.error("no account available");
+    const ethereum: providers.ExternalProvider = (window as any).ethereum;
+    if (typeof ethereum != "undefined") {
+      const accounts = await ethereum.request?.({
+        method: "eth_requestAccounts",
+      });
+      if (accounts.length == 0) {
+        console.error("no account available");
+        return;
+      }
+      const provider = new providers.Web3Provider(ethereum);
+      const defaultAcc: Account = {
+        address: accounts[0],
+      };
+
+      const cachedVal = window.localStorage.getItem("ensCache_" + accounts[0]);
+      if (cachedVal) {
+        const cachedName: ENSCache = JSON.parse(cachedVal);
+        if (cachedName.timestamp > Date.now()) {
+          defaultAcc.name = cachedName.name;
+          setProvider({
+            provider,
+            ethereum,
+            account: defaultAcc,
+          });
           return;
         }
-        const provider = new providers.Web3Provider(ethereum);
-        const defaultAcc: Account = {
-          address: accounts[0],
-        };
-
-        const cachedVal = window.localStorage.getItem(
-          "ensCache_" + accounts[0]
-        );
-        if (cachedVal) {
-          const cachedName: ENSCache = JSON.parse(cachedVal);
-          if (cachedName.timestamp > Date.now()) {
-            defaultAcc.name = cachedName.name;
-            setProvider({
-              provider,
-              ethereum,
-              account: defaultAcc,
-            });
-            return;
-          }
-        }
-
-        const reportedName = await provider.lookupAddress(accounts[0]);
-        const resolvedAddress = await provider.resolveName(reportedName);
-        if (
-          ethers.utils.getAddress(accounts[0]) ===
-          ethers.utils.getAddress(resolvedAddress)
-        ) {
-          defaultAcc.address = reportedName;
-        }
-        // cache the ENS name to avoid querying the RPC too much
-        window.localStorage.setItem(
-          "ensCache_" + accounts[0],
-          JSON.stringify({
-            timestamp: Date.now() + 360000,
-            name: reportedName,
-          })
-        );
-        setProvider({
-          provider,
-          ethereum,
-          account: defaultAcc,
-        });
       }
-    } catch (e) {
-      console.log(e);
+
+      const reportedName = await provider.lookupAddress(accounts[0]);
+      const resolvedAddress = await provider.resolveName(reportedName);
+      if (
+        ethers.utils.getAddress(accounts[0]) ===
+        ethers.utils.getAddress(resolvedAddress)
+      ) {
+        defaultAcc.address = reportedName;
+      }
+      // cache the ENS name to avoid querying the RPC too much
+      window.localStorage.setItem(
+        "ensCache_" + accounts[0],
+        JSON.stringify({
+          timestamp: Date.now() + 360000,
+          name: reportedName,
+        })
+      );
+      setProvider({
+        provider,
+        ethereum,
+        account: defaultAcc,
+      });
     }
   };
 
