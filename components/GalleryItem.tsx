@@ -4,17 +4,37 @@ import styles from "./GalleryItem.module.css";
 import useHover from "./useHover";
 import Button from "./Button";
 
+export type VaultItem = {
+  name: string;
+  file?: FileWithPath;
+};
+
 type Props = {
-  item: FileWithPath;
+  item: VaultItem;
+  rootURL?: string;
   deletable: boolean;
   onDelete: () => void;
 };
 
 const supportsPreview: { [key: string]: boolean } = {
   "image/jpeg": true,
+  jpeg: true,
+  JPG: true,
+  jpg: true,
   "image/svg+xml": true,
+  svg: true,
   "image/png": true,
+  png: true,
   "image/gif": true,
+  gif: true,
+};
+
+const typeFromName = (name: string): string => {
+  const segments = name.split(".");
+  if (segments.length > 1) {
+    return segments[segments.length - 1];
+  }
+  return "unknown";
 };
 
 const imgName = (type: string): string => {
@@ -29,18 +49,30 @@ const imgName = (type: string): string => {
   return "." + name;
 };
 
-export default function GalleryItem({ item, onDelete, deletable }: Props) {
-  const url = useMemo(() => URL.createObjectURL(item), [item]);
+export default function GalleryItem({
+  item,
+  onDelete,
+  deletable,
+  rootURL,
+}: Props) {
+  const url = useMemo(
+    () =>
+      item.file ? URL.createObjectURL(item.file) : rootURL + "/" + item.name,
+    [item]
+  );
   const [hovered, handlers] = useHover(!deletable);
   const btn = (
     <div className={styles.delete}>
       <Button text="Delete" onClick={onDelete} destroy />
     </div>
   );
-  return supportsPreview[item.type] ? (
+
+  const type = item.file ? item.file.type : typeFromName(item.name);
+
+  return supportsPreview[type] ? (
     <div
       className={styles.item}
-      style={{ backgroundImage: `url(${url})` }}
+      style={{ backgroundImage: `url("${url}")` }}
       role="img"
       aria-label={item.name}
       {...handlers}
@@ -49,7 +81,7 @@ export default function GalleryItem({ item, onDelete, deletable }: Props) {
     </div>
   ) : (
     <div className={[styles.item, styles.placeholder].join(" ")} {...handlers}>
-      <span className={styles.type}>{imgName(item.type)}</span>
+      <span className={styles.type}>{imgName(type)}</span>
       {hovered && btn}
     </div>
   );

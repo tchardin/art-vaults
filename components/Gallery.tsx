@@ -3,17 +3,23 @@ import useMeasure from "react-use-measure";
 import { useTransition, a } from "@react-spring/web";
 import { FileWithPath } from "react-dropzone";
 import styles from "./Gallery.module.css";
-import GalleryItem from "./GalleryItem";
+import GalleryItem, { VaultItem } from "./GalleryItem";
 
 type Props = {
-  items: FileWithPath[];
+  items: VaultItem[];
+  rootURL?: string;
   deletable: boolean;
-  onDelete: (item: FileWithPath) => void;
+  onDelete: (item: VaultItem) => void;
 };
 
 const height = 600;
 
-export default memo(function Gallery({ items, onDelete, deletable }: Props) {
+export default memo(function Gallery({
+  items,
+  onDelete,
+  deletable,
+  rootURL,
+}: Props) {
   const columns = 3;
   const [ref, { width }] = useMeasure();
 
@@ -50,6 +56,7 @@ export default memo(function Gallery({ items, onDelete, deletable }: Props) {
             item={item}
             onDelete={() => onDelete(item)}
             deletable={deletable}
+            rootURL={rootURL}
           />
         </a.div>
       ))}

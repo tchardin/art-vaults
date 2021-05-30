@@ -1,15 +1,18 @@
 import { useCallback, useState, useMemo, useEffect, useRef } from "react";
 import styles from "./Vault.module.css";
 import Head from "next/head";
-import Nav from "../components/Nav";
-import PlusIcon from "../components/PlusIcon";
-import Modal from "../components/Modal";
+import { useRouter } from "next/router";
+import useSWR from "swr";
+import Nav from "../../components/Nav";
+import PlusIcon from "../../components/PlusIcon";
+import Modal from "../../components/Modal";
 import { useDropzone, FileWithPath } from "react-dropzone";
-import Pill from "../components/Pill";
-import Button from "../components/Button";
-import TextInput from "../components/TextInput";
-import { useWeb3 } from "../components/Web3Provider";
-import Gallery from "../components/Gallery";
+import Pill from "../../components/Pill";
+import Button from "../../components/Button";
+import TextInput from "../../components/TextInput";
+import { useWeb3 } from "../../components/Web3Provider";
+import Gallery from "../../components/Gallery";
+import { VaultItem } from "../../components/GalleryItem";
 
 type ModalState =
   | "submit"
@@ -56,15 +59,32 @@ const modalDismissText = (state: ModalState): string => {
   }
 };
 
+const ROOT = process.env.NEXT_PUBLIC_MYEL_NODE ?? "";
+
+const fetcher = (root: string) =>
+  fetch(ROOT + "/" + root).then((res) => res.json());
+
 export default function Vault() {
-  const [secured, setSecured] = useState(false);
   const [modal, setModal] = useState<ModalState>(modals.CLOSED);
   const [whitelist, setWhitelist] = useState<string[]>([]);
   const addrInput = useRef() as React.MutableRefObject<HTMLInputElement>;
   const web3 = useWeb3();
-  const [items, set] = useState<FileWithPath[]>([]);
 
   const [addr, setAddr] = useState("");
+  const {
+    query: { cid: root },
+  } = useRouter();
+  const [secured, setSecured] = useState(() => !!root && root.length > 0);
+
+  const { data, error } = useSWR<string[]>(root?.[0] ?? null, fetcher);
+  const [items, set] = useState<VaultItem[]>([]);
+
+  // If the vault is secured, the item keys are loaded from the API
+  // else they are in the local state
+  const vaultItems = useMemo(
+    () => (secured ? data?.map((key) => ({ name: key })) || [] : items),
+    [data, secured, items]
+  );
 
   const submitVault = () => {
     setModal(modals.SUBMIT);
@@ -94,7 +114,7 @@ export default function Vault() {
     const body = new FormData();
     items.forEach((item) => body.append("file", item, item.name));
 
-    const response = await fetch("http://localhost:2001", {
+    const response = await fetch(ROOT, {
       method: "POST",
       body,
     });
@@ -106,8 +126,10 @@ export default function Vault() {
   };
 
   const secureVault = async () => {
+    const files: File[] = [];
+    items.forEach((item) => item.file && files.push(item.file));
     try {
-      const root = await upload(items);
+      const root = await upload(files);
       setModal(modals.SUCCESS);
       setSecured(true);
       document.body.dataset.theme = "blue";
@@ -119,12 +141,12 @@ export default function Vault() {
 
   const onDrop = useCallback(
     (files: FileWithPath[]) => {
-      set([...items, files[0]]);
+      set([...items, { name: files[0].name, file: files[0] }]);
     },
     [items]
   );
   const handleDelete = useCallback(
-    (item: FileWithPath) => {
+    (item: VaultItem) => {
       set(items.filter((el) => el.name != item.name));
     },
     [items]
@@ -133,6 +155,8 @@ export default function Vault() {
     onDrop,
     noClick: true,
   });
+
+  console.log(vaultItems);
 
   return (
     <div className={styles.container} {...getRootProps()}>
@@ -156,7 +180,7 @@ export default function Vault() {
 
       <input {...getInputProps()} />
 
-      {items.length > 0 ? (
+      {vaultItems.length > 0 ? (
         <div className={styles.items}>
           {secured ? (
             whitelist.length > 0 ? (
@@ -174,7 +198,12 @@ export default function Vault() {
               </p>
             </div>
           )}
-          <Gallery items={items} onDelete={handleDelete} deletable={!secured} />
+          <Gallery
+            items={vaultItems}
+            onDelete={handleDelete}
+            deletable={!secured}
+            rootURL={secured ? ROOT + "/" + root?.[0] : undefined}
+          />
         </div>
       ) : (
         <div className={styles.content}>
