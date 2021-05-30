@@ -33,37 +33,37 @@ export default function Web3Provider({ children }: Web3ProviderProps) {
   const [provider, setProvider] = useState<Web3 | null>(null);
 
   const connect = async () => {
-    try {
-      const ethereum: providers.ExternalProvider = (window as any).ethereum;
-      if (typeof ethereum != "undefined") {
-        const accounts = await ethereum.request?.({
-          method: "eth_requestAccounts",
-        });
-        if (accounts.length == 0) {
-          console.error("no account available");
+    console.log("connecting...");
+    const ethereum: providers.ExternalProvider = (window as any).ethereum;
+    if (typeof ethereum != "undefined") {
+      const accounts = await ethereum.request?.({
+        method: "eth_requestAccounts",
+      });
+      if (accounts.length == 0) {
+        console.error("no account available");
+        return;
+      }
+      const provider = new providers.Web3Provider(ethereum);
+      const defaultAcc: Account = {
+        address: accounts[0],
+      };
+
+      const cachedVal = window.localStorage.getItem("ensCache_" + accounts[0]);
+      if (cachedVal) {
+        const cachedName: ENSCache = JSON.parse(cachedVal);
+        if (cachedName.timestamp > Date.now()) {
+          defaultAcc.name = cachedName.name;
+          setProvider({
+            provider,
+            ethereum,
+            account: defaultAcc,
+          });
           return;
         }
-        const provider = new providers.Web3Provider(ethereum);
-        const defaultAcc: Account = {
-          address: accounts[0],
-        };
+      }
 
-        const cachedVal = window.localStorage.getItem(
-          "ensCache_" + accounts[0]
-        );
-        if (cachedVal) {
-          const cachedName: ENSCache = JSON.parse(cachedVal);
-          if (cachedName.timestamp > Date.now()) {
-            defaultAcc.name = cachedName.name;
-            setProvider({
-              provider,
-              ethereum,
-              account: defaultAcc,
-            });
-            return;
-          }
-        }
-
+      // Check if we can find an ENS name associated with this account
+      try {
         const reportedName = await provider.lookupAddress(accounts[0]);
         const resolvedAddress = await provider.resolveName(reportedName);
         if (
@@ -80,14 +80,17 @@ export default function Web3Provider({ children }: Web3ProviderProps) {
             name: reportedName,
           })
         );
-        setProvider({
-          provider,
-          ethereum,
-          account: defaultAcc,
-        });
+      } catch (e) {
+        console.log(e);
       }
-    } catch (e) {
-      console.log(e);
+
+      setProvider({
+        provider,
+        ethereum,
+        account: defaultAcc,
+      });
+    } else {
+      console.log("Metamask unavailable");
     }
   };
 

@@ -1,8 +1,10 @@
 import { Dialog } from "@reach/dialog";
 import Button from "./Button";
+import Spinner from "./Spinner";
 import styles from "./Modal.module.css";
 
 type Props = {
+  loading?: boolean;
   isOpen: boolean;
   actionTitle: string;
   action: () => void;
@@ -17,6 +19,7 @@ type Props = {
 export default function Modal({
   actionTitle,
   action,
+  loading,
   isOpen,
   center,
   onDismiss,
@@ -25,14 +28,13 @@ export default function Modal({
   disableAction,
   onlyDismiss,
 }: Props) {
-  console.log(onlyDismiss);
   return (
     <Dialog
       isOpen={isOpen}
       onDismiss={onDismiss}
       style={{
         width: 460,
-        height: 409,
+        height: 420,
         borderRadius: 20,
         overflow: "hidden",
         borderWidth: 3,
@@ -50,8 +52,10 @@ export default function Modal({
           {children}
         </div>
         <div className={styles.bottomBar}>
-          <button onClick={onDismiss}>{dismissTitle ?? "Cancel"}</button>
-          {!onlyDismiss && (
+          <button onClick={onDismiss} disabled={loading}>
+            {loading ? <Spinner /> : dismissTitle ?? "Cancel"}
+          </button>
+          {!onlyDismiss && !loading && (
             <>
               <div className={styles.divider} />
               <button

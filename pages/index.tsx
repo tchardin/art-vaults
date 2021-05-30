@@ -14,8 +14,13 @@ export default function Home() {
   const [isOpen, setWalletOpen] = useState(false);
   const web3 = useWeb3();
   const connectWallet = async () => {
-    await web3.connect();
-    newVault();
+    try {
+      await web3.connect();
+      console.log("connected");
+      newVault();
+    } catch (e) {
+      console.log(e);
+    }
   };
   const startWallet = () => {
     setWalletOpen(true);

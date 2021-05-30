@@ -1,19 +1,42 @@
+import { useMemo } from "react";
+import { FileWithPath } from "react-dropzone";
 import styles from "./GalleryItem.module.css";
 import useHover from "./useHover";
 import Button from "./Button";
 
-type Props = {
-  url: string;
+export type VaultItem = {
   name: string;
-  fileType: string;
-  onDelete: () => void;
+  file?: FileWithPath;
+};
+
+type Props = {
+  item: VaultItem;
+  rootURL?: string;
+  deletable: boolean;
+  selectable: boolean;
+  onSelect: () => void;
+  noPreview?: boolean;
 };
 
 const supportsPreview: { [key: string]: boolean } = {
   "image/jpeg": true,
+  jpeg: true,
+  JPG: true,
+  jpg: true,
   "image/svg+xml": true,
+  svg: true,
   "image/png": true,
+  png: true,
   "image/gif": true,
+  gif: true,
+};
+
+const typeFromName = (name: string): string => {
+  const segments = name.split(".");
+  if (segments.length > 1) {
+    return segments[segments.length - 1];
+  }
+  return "unknown";
 };
 
 const imgName = (type: string): string => {
@@ -28,28 +51,70 @@ const imgName = (type: string): string => {
   return "." + name;
 };
 
-export default function GalleryItem({ url, name, fileType, onDelete }: Props) {
-  const [hovered, handlers] = useHover(false);
+export default function GalleryItem({
+  item,
+  onSelect,
+  deletable,
+  selectable,
+  noPreview,
+  rootURL,
+}: Props) {
+  const url = useMemo(
+    () =>
+      item.file ? URL.createObjectURL(item.file) : rootURL + "/" + item.name,
+    [item]
+  );
+  const [hovered, handlers] = useHover(!deletable);
+  const onClick = () => {
+    if (selectable) {
+      onSelect();
+    }
+  };
+  if (noPreview) {
+    return (
+      <div
+        className={[
+          styles.item,
+          styles.empty,
+          selectable ? styles.select : "",
+        ].join(" ")}
+        onClick={onClick}
+      >
+        <span className={styles.noPreview}>No preview</span>
+      </div>
+    );
+  }
   const btn = (
     <div className={styles.delete}>
-      <Button text="Delete" onClick={onDelete} destroy />
+      <Button text="Delete" onClick={onSelect} destroy />
     </div>
   );
-  return supportsPreview[fileType] ? (
+
+  const type = item.file ? item.file.type : typeFromName(item.name);
+
+  return supportsPreview[type] ? (
     <div
-      className={styles.item}
-      style={{ backgroundImage: `url(${url})` }}
+      className={[styles.item, selectable ? styles.select : ""].join(" ")}
+      style={{ backgroundImage: `url("${url}")` }}
       role="img"
-      aria-label={name}
+      aria-label={item.name}
+      onClick={onClick}
       {...handlers}
     >
       {hovered && btn}
     </div>
   ) : (
-    <div className={[styles.item, styles.placeholder].join(" ")} {...handlers}>
-      <span className={styles.type}>{imgName(fileType)}</span>
+    <div
+      className={[
+        styles.item,
+        styles.placeholder,
+        selectable ? styles.select : "",
+      ].join(" ")}
+      onClick={onClick}
+      {...handlers}
+    >
+      <span className={styles.type}>{imgName(type)}</span>
       {hovered && btn}
     </div>
   );
-  /* <div style={{ backgroundImage: `url(${url})` }} className={styles.item} /> */
 }

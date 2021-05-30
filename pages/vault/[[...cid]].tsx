@@ -1,32 +1,25 @@
-import { useCallback, useState, useMemo, useEffect, useRef } from "react";
+import {
+  useCallback,
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+} from "react";
 import styles from "./Vault.module.css";
 import Head from "next/head";
-import Nav from "../components/Nav";
-import PlusIcon from "../components/PlusIcon";
-import Modal from "../components/Modal";
+import { useRouter } from "next/router";
+import useSWR from "swr";
+import Nav from "../../components/Nav";
+import PlusIcon from "../../components/PlusIcon";
+import Modal from "../../components/Modal";
 import { useDropzone, FileWithPath } from "react-dropzone";
-import Pill from "../components/Pill";
-import Button from "../components/Button";
-import TextInput from "../components/TextInput";
-import { useWeb3 } from "../components/Web3Provider";
-import Gallery, { Tile } from "../components/Gallery";
-
-const placeholders = [
-  { url: "https://images.pexels.com/photos/416430/pexels-photo-416430.jpeg" },
-  { url: "https://images.pexels.com/photos/1103970/pexels-photo-1103970.jpeg" },
-  { url: "https://images.pexels.com/photos/911738/pexels-photo-911738.jpeg" },
-  { url: "https://images.pexels.com/photos/358574/pexels-photo-358574.jpeg" },
-  { url: "https://images.pexels.com/photos/1738986/pexels-photo-1738986.jpeg" },
-  { url: "https://images.pexels.com/photos/96381/pexels-photo-96381.jpeg" },
-  { url: "https://images.pexels.com/photos/1005644/pexels-photo-1005644.jpeg" },
-  { url: "https://images.pexels.com/photos/227675/pexels-photo-227675.jpeg" },
-  { url: "https://images.pexels.com/photos/325185/pexels-photo-325185.jpeg" },
-  { url: "https://images.pexels.com/photos/327482/pexels-photo-327482.jpeg" },
-  { url: "https://images.pexels.com/photos/2736834/pexels-photo-2736834.jpeg" },
-  { url: "https://images.pexels.com/photos/249074/pexels-photo-249074.jpeg" },
-  { url: "https://images.pexels.com/photos/310452/pexels-photo-310452.jpeg" },
-  { url: "https://images.pexels.com/photos/380337/pexels-photo-380337.jpeg" },
-];
+import Pill from "../../components/Pill";
+import Button from "../../components/Button";
+import TextInput from "../../components/TextInput";
+import { useWeb3 } from "../../components/Web3Provider";
+import Gallery from "../../components/Gallery";
+import GalleryItem, { VaultItem } from "../../components/GalleryItem";
 
 type ModalState =
   | "submit"
@@ -34,7 +27,11 @@ type ModalState =
   | "share"
   | "closed"
   | "shared"
-  | "manage_access";
+  | "manage_access"
+  | "processing"
+  | "error"
+  | "select_preview"
+  | "confirm_preview";
 
 const modals: { [key: string]: ModalState } = {
   CLOSED: "closed",
@@ -43,12 +40,20 @@ const modals: { [key: string]: ModalState } = {
   SHARE: "share",
   SHARED: "shared",
   MANAGE_ACCESS: "manage_access",
+  PROCESSING: "processing",
+  ERROR: "error",
+  SELECT_PREVIEW: "select_preview",
+  CONFIRM_PREVIEW: "confirm_preview",
 };
 
 const modalBtnText = (state: ModalState): string => {
   switch (state) {
-    case modals.SUBMIT:
+    case modals.CONFIRM_PREVIEW:
       return "Secure Vault";
+    case modals.ERROR:
+      return "Try again";
+    case modals.SUBMIT:
+      return "Continue";
     case modals.SUCCESS:
       return "Share Vault";
     case modals.SHARE:
@@ -73,22 +78,44 @@ const modalDismissText = (state: ModalState): string => {
   }
 };
 
+const ROOT = process.env.NEXT_PUBLIC_MYEL_NODE ?? "";
+
+const fetcher = (root: string) =>
+  fetch(ROOT + "/" + root).then((res) => res.json());
+
 export default function Vault() {
-  const [secured, setSecured] = useState(false);
   const [modal, setModal] = useState<ModalState>(modals.CLOSED);
   const [whitelist, setWhitelist] = useState<string[]>([]);
   const addrInput = useRef() as React.MutableRefObject<HTMLInputElement>;
   const web3 = useWeb3();
 
   const [addr, setAddr] = useState("");
+  const [preview, setPreview] = useState<VaultItem>();
+  const {
+    push,
+    query: { cid: root },
+  } = useRouter();
+  const [secured, setSecured] = useState(() => !!root && root.length > 0);
+
+  const { data, error } = useSWR<string[]>(root?.[0] ?? null, fetcher);
+  const [items, set] = useState<VaultItem[]>([]);
+  const [err, setErr] = useState<string>();
+
+  // If the vault is secured, the item keys are loaded from the API
+  // else they are in the local state
+  const vaultItems = useMemo(
+    () => (secured ? data?.map((key) => ({ name: key })) || [] : items),
+    [data, secured, items]
+  );
+
+  useLayoutEffect(() => {
+    if (secured) {
+      document.body.dataset.theme = "blue";
+    }
+  }, [secured]);
 
   const submitVault = () => {
     setModal(modals.SUBMIT);
-  };
-  const secureVault = () => {
-    setModal(modals.SUCCESS);
-    setSecured(true);
-    document.body.dataset.theme = "blue";
   };
   const sharedVault = () => {
     setModal(modals.SHARED);
@@ -99,6 +126,12 @@ export default function Vault() {
   };
   const manageAccess = () => {
     setModal(modals.MANAGE_ACCESS);
+  };
+  const selectPreview = () => {
+    setModal(modals.SELECT_PREVIEW);
+  };
+  const confirmPreview = () => {
+    setModal(modals.CONFIRM_PREVIEW);
   };
   const closeModal = () => {
     setAddr("");
@@ -111,37 +144,64 @@ export default function Vault() {
     }
   };
 
-  const [items, set] = useState<Tile[]>([]);
+  const upload = async (items: File[]): Promise<string> => {
+    if (!ROOT) {
+      return "";
+    }
+    const body = new FormData();
+    items.forEach((item) => body.append("file", item, item.name));
+
+    const response = await fetch(ROOT, {
+      method: "POST",
+      body,
+    });
+    const rootCID = response.headers.get("Ipfs-Hash");
+    if (!rootCID) {
+      return "";
+    }
+    return rootCID;
+  };
+
+  const secureVault = async () => {
+    setModal(modals.PROCESSING);
+    // artificial delay for now
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    const files: File[] = [];
+    items.forEach((item) => item.file && files.push(item.file));
+    try {
+      const root = await upload(files);
+      push(root ? "/vault/" + root : "/fault");
+      setModal(modals.SUCCESS);
+      setSecured(true);
+    } catch (e) {
+      setErr(e.toString());
+      setModal(modals.ERROR);
+    }
+  };
+
   const onDrop = useCallback(
     (files: FileWithPath[]) => {
-      console.log(files);
-      set([
-        ...items,
-        {
-          url: URL.createObjectURL(files[0]),
-          name: files[0].name,
-          fileType: files[0].type,
-        },
-      ]);
-      /* fetch("http://localhost:2001", { */
-      /*   method: "POST", */
-      /*   body: files[0], */
-      /* }) */
-      /*   .then((res) => setCid(res.headers.get("Ipfs-Hash"))) */
-      /*   .catch((err) => console.log(err)); */
+      set([...items, { name: files[0].name, file: files[0] }]);
     },
     [items]
   );
   const handleDelete = useCallback(
-    (item: Tile) => {
-      set(items.filter((el) => el.url != item.url));
+    (item: VaultItem) => {
+      set(items.filter((el) => el.name != item.name));
     },
     [items]
   );
+  const handleSelect = useCallback((item: VaultItem) => {
+    setPreview(item);
+    setModal(modals.CONFIRM_PREVIEW);
+  }, []);
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     noClick: true,
   });
+
+  console.log(vaultItems);
 
   return (
     <div className={styles.container} {...getRootProps()}>
@@ -154,7 +214,7 @@ export default function Vault() {
       <Nav
         title="Vaults.art"
         actionTitle={secured ? "Share" : "Submit"}
-        action={secured ? shareVault : submitVault}
+        action={secured ? shareVault : selectPreview}
         actionDisabled={!secured && items.length == 0}
         username={
           web3.account
@@ -165,7 +225,7 @@ export default function Vault() {
 
       <input {...getInputProps()} />
 
-      {items.length > 0 ? (
+      {vaultItems.length > 0 ? (
         <div className={styles.items}>
           {secured ? (
             whitelist.length > 0 ? (
@@ -183,7 +243,12 @@ export default function Vault() {
               </p>
             </div>
           )}
-          <Gallery items={items} onDelete={handleDelete} />
+          <Gallery
+            items={vaultItems}
+            onSelect={handleDelete}
+            deletable={!secured}
+            rootURL={secured ? ROOT + "/" + root?.[0] : undefined}
+          />
         </div>
       ) : (
         <div className={styles.content}>
@@ -199,21 +264,26 @@ export default function Vault() {
         actionTitle={modalBtnText(modal)}
         dismissTitle={modalDismissText(modal)}
         action={
-          modal == modals.SUBMIT
+          modal === modals.SUBMIT
             ? secureVault
-            : modal == modals.SUCCESS
+            : modal === modals.CONFIRM_PREVIEW
+            ? submitVault
+            : modal === modals.SUCCESS
             ? shareVault
-            : modal == modals.SHARE
+            : modal === modals.SHARE
             ? sharedVault
+            : modal === modals.ERROR
+            ? submitVault
             : closeModal
         }
         onDismiss={closeModal}
         isOpen={modal !== modals.CLOSED}
-        center={modal == modals.SHARE}
+        loading={modal === modals.PROCESSING}
+        center={modal === modals.SHARE || modal === modals.CONFIRM_PREVIEW}
         disableAction={modal == modals.SHARE && addr === ""}
         onlyDismiss={modal === modals.SHARED || modal === modals.MANAGE_ACCESS}
       >
-        {modal == modals.SHARE ? (
+        {modal === modals.SHARE ? (
           <>
             <h1>Share Vault</h1>
             <p className={styles.modalText}>
@@ -232,7 +302,7 @@ export default function Vault() {
             </div>
             <Button text="Paste Address" onClick={pasteAddress} secondary />
           </>
-        ) : modal == modals.SHARED ? (
+        ) : modal === modals.SHARED ? (
           <>
             <h1>Vault Shared!</h1>
             <p>Your vault is now viewable by</p>
@@ -240,7 +310,7 @@ export default function Vault() {
             <p>Manage access to your vault</p>
             <Button text="Manage Access" onClick={manageAccess} />
           </>
-        ) : modal == modals.MANAGE_ACCESS ? (
+        ) : modal === modals.MANAGE_ACCESS ? (
           <>
             <h1>Manage access</h1>
             <p>Whitelisted addresses</p>
@@ -261,6 +331,48 @@ export default function Vault() {
                 </div>
               </div>
             ))}
+          </>
+        ) : modal === modals.SELECT_PREVIEW ? (
+          <>
+            <h2>Please select a preview for your Vault</h2>
+            <Gallery
+              items={vaultItems}
+              deletable={false}
+              selectable
+              onSelect={handleSelect}
+            />
+          </>
+        ) : modal === modals.CONFIRM_PREVIEW ? (
+          <>
+            <h2>Confirm Preview Selection</h2>
+            <div className={styles.selectedPreview}>
+              <GalleryItem
+                item={preview as VaultItem}
+                noPreview={preview?.name === "*"}
+                selectable={false}
+                deletable={false}
+                onSelect={() => {}}
+              />
+            </div>
+            <Button text="Edit Cover" onClick={selectPreview} secondary />
+          </>
+        ) : modal === modals.PROCESSING ? (
+          <>
+            <h1>Processing...</h1>
+            <p>Your vault is being uploaded onto Filecoin Storage.</p>
+            <p>
+              This can take a couple minutes as it involves submitting a
+              transaction on the blockchain.
+            </p>
+          </>
+        ) : modal === modals.ERROR ? (
+          <>
+            <h1>Oh no!</h1>
+            <p className={styles.errMsg}>{err}</p>
+            <p>
+              This could be due to your network fee not being high enough or
+              congestion on our network. Please try again!
+            </p>
           </>
         ) : secured ? (
           <>

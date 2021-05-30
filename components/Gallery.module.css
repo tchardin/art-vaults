@@ -10,4 +10,6 @@
   padding: 15px;
 }
 
-
+.small {
+  padding: 4px !important;
+}
