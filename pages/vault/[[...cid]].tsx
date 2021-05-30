@@ -281,7 +281,11 @@ export default function Vault() {
         loading={modal === modals.PROCESSING}
         center={modal === modals.SHARE || modal === modals.CONFIRM_PREVIEW}
         disableAction={modal == modals.SHARE && addr === ""}
-        onlyDismiss={modal === modals.SHARED || modal === modals.MANAGE_ACCESS}
+        onlyDismiss={
+          modal === modals.SHARED ||
+          modal === modals.MANAGE_ACCESS ||
+          modal === modals.SELECT_PREVIEW
+        }
       >
         {modal === modals.SHARE ? (
           <>
