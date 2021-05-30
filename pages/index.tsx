@@ -84,7 +84,7 @@ export default function Home() {
       />
 
       <main className={styles.main}>
-        <Image src="/hero.png" height={324} width={700} alt="Painting" />
+        <Image src="/painting.jpg" height={324} width={700} alt="Painting" />
         <h1 className={styles.title}>
           Decentralized Storage for exclusive NFT content.{" "}
         </h1>
