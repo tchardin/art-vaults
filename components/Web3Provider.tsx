@@ -62,22 +62,28 @@ export default function Web3Provider({ children }: Web3ProviderProps) {
         }
       }
 
-      const reportedName = await provider.lookupAddress(accounts[0]);
-      const resolvedAddress = await provider.resolveName(reportedName);
-      if (
-        ethers.utils.getAddress(accounts[0]) ===
-        ethers.utils.getAddress(resolvedAddress)
-      ) {
-        defaultAcc.address = reportedName;
+      // Check if we can find an ENS name associated with this account
+      try {
+        const reportedName = await provider.lookupAddress(accounts[0]);
+        const resolvedAddress = await provider.resolveName(reportedName);
+        if (
+          ethers.utils.getAddress(accounts[0]) ===
+          ethers.utils.getAddress(resolvedAddress)
+        ) {
+          defaultAcc.address = reportedName;
+        }
+        // cache the ENS name to avoid querying the RPC too much
+        window.localStorage.setItem(
+          "ensCache_" + accounts[0],
+          JSON.stringify({
+            timestamp: Date.now() + 360000,
+            name: reportedName,
+          })
+        );
+      } catch (e) {
+        console.log(e);
       }
-      // cache the ENS name to avoid querying the RPC too much
-      window.localStorage.setItem(
-        "ensCache_" + accounts[0],
-        JSON.stringify({
-          timestamp: Date.now() + 360000,
-          name: reportedName,
-        })
-      );
+
       setProvider({
         provider,
         ethereum,
