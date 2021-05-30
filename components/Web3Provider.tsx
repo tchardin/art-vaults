@@ -33,6 +33,7 @@ export default function Web3Provider({ children }: Web3ProviderProps) {
   const [provider, setProvider] = useState<Web3 | null>(null);
 
   const connect = async () => {
+    console.log("connecting...");
     const ethereum: providers.ExternalProvider = (window as any).ethereum;
     if (typeof ethereum != "undefined") {
       const accounts = await ethereum.request?.({
@@ -82,6 +83,8 @@ export default function Web3Provider({ children }: Web3ProviderProps) {
         ethereum,
         account: defaultAcc,
       });
+    } else {
+      console.log("Metamask unavailable");
     }
   };
 
