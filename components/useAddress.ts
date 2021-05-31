@@ -19,7 +19,9 @@ export default function useAddress(addr: string): string {
     setFormatted(format(name));
   };
   useEffect(() => {
-    getENSOrAddress(addr).then(set);
+    if (addr) {
+      getENSOrAddress(addr).then(set);
+    }
   }, [addr]);
 
   return formatted;

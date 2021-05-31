@@ -31,10 +31,7 @@ export default function Home() {
   const connectWallet = async () => {
     try {
       await web3.connect();
-      console.log("connected");
-      if (vaultCID) {
-        router.push("/vault/" + vaultCID);
-      } else {
+      if (!vaultCID) {
         newVault();
       }
     } catch (e) {
@@ -66,12 +63,12 @@ export default function Home() {
   const sharer = useAddress(creator ?? "");
 
   useEffect(() => {
-    if (router.query.v) {
+    if (vaultCID) {
       if (web3.connected) {
-        console.log("connected");
+        router.push("/vault/" + vaultCID);
       }
     }
-  }, [web3.connected]);
+  }, [web3.connected, vaultCID]);
   return (
     <div className={styles.container}>
       <Head>

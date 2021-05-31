@@ -63,7 +63,7 @@ export const getENSOrAddress = async (addr: string): Promise<string> => {
       })
     );
   } catch (e) {
-    console.log(e);
+    console.log("getENSOrAddress", e, addr);
   }
   return name;
 };
