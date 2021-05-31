@@ -1,4 +1,4 @@
-import { Dialog } from "@reach/dialog";
+import { DialogOverlay, DialogContent } from "@reach/dialog";
 import Button from "./Button";
 import Spinner from "./Spinner";
 import styles from "./Modal.module.css";
@@ -29,49 +29,53 @@ export default function Modal({
   onlyDismiss,
 }: Props) {
   return (
-    <Dialog
+    <DialogOverlay
       isOpen={isOpen}
       onDismiss={onDismiss}
-      style={{
-        width: 460,
-        height: 480,
-        borderRadius: 20,
-        overflow: "hidden",
-        borderWidth: 3,
-        borderColor: "#0013BD",
-        borderStyle: "solid",
-        marginTop: "25vh",
-        position: "relative",
-      }}
-      aria-label={actionTitle}
+      style={{ zIndex: 2994 }}
     >
-      <div className={styles.container}>
-        <div
-          className={[styles.content, center ? styles.center : ""].join(" ")}
-        >
-          {children}
+      <DialogContent
+        style={{
+          width: 460,
+          height: 480,
+          borderRadius: 20,
+          overflow: "hidden",
+          borderWidth: 3,
+          borderColor: "#0013BD",
+          borderStyle: "solid",
+          marginTop: "25vh",
+          position: "relative",
+        }}
+        aria-label={actionTitle}
+      >
+        <div className={styles.container}>
+          <div
+            className={[styles.content, center ? styles.center : ""].join(" ")}
+          >
+            {children}
+          </div>
+          <div className={styles.bottomBar}>
+            <button onClick={onDismiss} disabled={loading}>
+              {loading ? <Spinner /> : dismissTitle ?? "Cancel"}
+            </button>
+            {!onlyDismiss && !loading && (
+              <>
+                <div className={styles.divider} />
+                <button
+                  onClick={action}
+                  className={[
+                    styles.primary,
+                    disableAction ? styles.disabled : "",
+                  ].join(" ")}
+                  disabled={disableAction}
+                >
+                  {actionTitle}
+                </button>
+              </>
+            )}
+          </div>
         </div>
-        <div className={styles.bottomBar}>
-          <button onClick={onDismiss} disabled={loading}>
-            {loading ? <Spinner /> : dismissTitle ?? "Cancel"}
-          </button>
-          {!onlyDismiss && !loading && (
-            <>
-              <div className={styles.divider} />
-              <button
-                onClick={action}
-                className={[
-                  styles.primary,
-                  disableAction ? styles.disabled : "",
-                ].join(" ")}
-                disabled={disableAction}
-              >
-                {actionTitle}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </Dialog>
+      </DialogContent>
+    </DialogOverlay>
   );
 }

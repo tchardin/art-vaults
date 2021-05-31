@@ -8,6 +8,10 @@ body {
     color: var(--color-text);
 }
 
+button {
+  outline: none;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -41,4 +45,8 @@ body[data-theme="blue"] {
   --color-btn-text: #0013BD;
   --color-btn-secondary: #E6E6E6;
   --color-btn-secondary-text: #808080;
+}
+
+p {
+  margin-top: 0;
 }

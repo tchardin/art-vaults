@@ -11,6 +11,7 @@ import VaultIcon from "../components/VaultIcon";
 import { useWeb3 } from "../components/Web3Provider";
 import { ROOT, txtFetcher } from "../lib/fetchers";
 import GalleryItem from "../components/GalleryItem";
+import useAddress from "../components/useAddress";
 
 const formatAddress = (addr: string): string => {
   if (!addr) {
@@ -30,10 +31,7 @@ export default function Home() {
   const connectWallet = async () => {
     try {
       await web3.connect();
-      console.log("connected");
-      if (vaultCID) {
-        router.push("/vault/" + vaultCID);
-      } else {
+      if (!vaultCID) {
         newVault();
       }
     } catch (e) {
@@ -51,7 +49,7 @@ export default function Home() {
     document.body.dataset.theme = "light";
   }, []);
 
-  const isShareLink = !!vaultCID; //&& !web3.connected;
+  const isShareLink = !!vaultCID && !web3.connected;
 
   const { data: creator } = useSWR<string>(
     isShareLink ? vaultCID + "/username" : null,
@@ -62,13 +60,15 @@ export default function Home() {
     txtFetcher
   );
 
+  const sharer = useAddress(creator ?? "");
+
   useEffect(() => {
-    if (router.query.v) {
+    if (vaultCID) {
       if (web3.connected) {
-        console.log("connected");
+        router.push("/vault/" + vaultCID);
       }
     }
-  }, [web3.connected]);
+  }, [web3.connected, vaultCID]);
   return (
     <div className={styles.container}>
       <Head>
@@ -132,7 +132,7 @@ export default function Home() {
           deletable={false}
           onSelect={() => {}}
         />
-        <h2>{formatAddress(creator || "")} shared a vault with you</h2>
+        <h2>{sharer} shared a vault with you</h2>
         <p>
           This vault contains exclusive content. Connect your wallet to view its
           contents.

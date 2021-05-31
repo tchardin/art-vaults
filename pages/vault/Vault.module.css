@@ -1,5 +1,5 @@
 .container {
-  min-height: 100vh;
+  min-height: calc(100vh - 85px);
   padding: 0 0.5rem;
   padding-top: 85px;
   display: flex;
@@ -68,6 +68,14 @@
   align-items: center;
   width: 100%;
   margin-bottom: 8px;
+}
+
+.labelRow {
+  margin-bottom: 20px;
+}
+
+.labelRow p {
+  margin-bottom: 12px;
 }
 
 .rmBtn {

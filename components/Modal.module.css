@@ -67,5 +67,5 @@
 .disabled {
   color: #808080;
   opacity: 0.5;
-  cursor: not-allowed;
+  cursor: not-allowed !important;
 }

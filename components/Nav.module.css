@@ -6,6 +6,7 @@
   width: 100%;
   height: 85px;
   z-index: 1994;
+  background: linear-gradient(to bottom, var(--color-bg), 75%, transparent);
 }
 
 .content {

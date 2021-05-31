@@ -85,6 +85,29 @@ const nonFileItems: { [key: string]: boolean } = {
   "": true,
 };
 
+type UserCache = {
+  root: string;
+  whitelist: string[];
+};
+
+const setLocalUser = (addr: string, root: string, whitelist: string[]) => {
+  window.localStorage.setItem(
+    "vaultRoot_" + addr,
+    JSON.stringify({
+      root,
+      whitelist,
+    })
+  );
+};
+
+const getLocalUser = (addr: string): UserCache | null => {
+  const cached = window.localStorage.getItem("vaultRoot_" + addr);
+  if (!cached) {
+    return null;
+  }
+  return JSON.parse(cached);
+};
+
 export default function Vault() {
   const [modal, setModal] = useState<ModalState>(modals.CLOSED);
   const [whitelist, setWhitelist] = useState<string[]>([]);
@@ -101,15 +124,6 @@ export default function Vault() {
 
   const [secured, setSecured] = useState(false);
 
-  useEffect(() => {
-    if (!web3.account) {
-      replace("/");
-    }
-    if (root?.[0]) {
-      setSecured(true);
-    }
-  }, [root?.[0], web3.account]);
-
   const { data, error } = useSWR<string[]>(root?.[0] ?? null, jsonFetcher);
   const [items, set] = useState<VaultItem[]>([]);
   const [err, setErr] = useState<string>();
@@ -123,6 +137,38 @@ export default function Vault() {
     () => !!creator && creator == web3.account?.address,
     [creator, web3.account?.address]
   );
+
+  // set initial whitelist from cache
+  useEffect(() => {
+    if (web3.account?.address) {
+      const user = getLocalUser(web3.account.address);
+      if (!user) {
+        return;
+      }
+      if (user.root) {
+        replace("/vault/" + user.root);
+      }
+      if (user.whitelist.length) {
+        setWhitelist(user.whitelist);
+      }
+    }
+  }, [web3.account?.address]);
+
+  // Subscribe to cache the whitelist
+  useEffect(() => {
+    if (root?.[0] && web3.account?.address) {
+      setLocalUser(web3.account.address, root[0], whitelist);
+    }
+  }, [whitelist]);
+
+  useEffect(() => {
+    if (web3.connected && !web3.account) {
+      replace("/");
+    }
+    if (root?.[0]) {
+      setSecured(true);
+    }
+  }, [root?.[0], web3.account]);
 
   // If the vault is secured, the item keys are loaded from the API
   // else they are in the local state
@@ -202,9 +248,17 @@ export default function Vault() {
     items.forEach((item) => item.file && files.push(item.file));
     try {
       const root = await upload(files);
-      push(root ? "/vault/" + root : "/fault");
-      setModal(modals.SUCCESS);
-      setSecured(true);
+      if (root) {
+        push("/vault/" + root);
+        setModal(modals.SUCCESS);
+        setSecured(true);
+        if (web3.account?.address) {
+          setLocalUser(web3.account?.address, root, []);
+        }
+      } else {
+        setErr("fail to upload");
+        setModal(modals.ERROR);
+      }
     } catch (e) {
       setErr(e.toString());
       setModal(modals.ERROR);
@@ -232,7 +286,9 @@ export default function Vault() {
     noClick: true,
   });
   const shareLink = "vaults.art/?v=" + root;
-  console.log(vaultItems);
+  const copyLink = () => {
+    navigator.clipboard.writeText(shareLink);
+  };
 
   return (
     <div className={styles.container} {...getRootProps()}>
@@ -244,9 +300,13 @@ export default function Vault() {
 
       <Nav
         title="Vaults.art"
-        actionTitle={secured ? "Share" : "Submit"}
+        actionTitle={
+          secured && !isOwner ? "Bid on Vault" : secured ? "Share" : "Submit"
+        }
         action={secured ? shareVault : selectPreview}
-        actionDisabled={!secured && items.length == 0}
+        actionDisabled={
+          (secured && !isOwner) || (!secured && items.length == 0)
+        }
         username={
           web3.account
             ? web3.account.name ?? web3.account.address
@@ -340,16 +400,22 @@ export default function Vault() {
         ) : modal === modals.SHARED ? (
           <>
             <h1>Vault Shared!</h1>
-            <p>Your vault is now viewable by</p>
-            <Pill text={addr} />
-            <p>Manage access to your vault</p>
-            <Button text="Manage Access" onClick={manageAccess} />
-            <p>Share this link to let them know they have access</p>
-            <div
-              className={styles.link}
-              onClick={() => navigator.clipboard.writeText(shareLink)}
-            >
-              {shareLink}
+            <div className={styles.labelRow}>
+              <p>Your vault is now viewable by</p>
+              <Pill text={addr} />
+            </div>
+            <div className={styles.labelRow}>
+              <p>Manage access to your vault</p>
+              <Button text="Manage Access" onClick={manageAccess} />
+            </div>
+            <div className={styles.labelRow}>
+              <p>Share this link to let them know they have access</p>
+              <div className={styles.addrRow}>
+                <div className={styles.link} onClick={copyLink}>
+                  {shareLink.slice(0, 24)}...
+                </div>
+                <Button text="Copy" onClick={copyLink} secondary />
+              </div>
             </div>
           </>
         ) : modal === modals.MANAGE_ACCESS ? (
