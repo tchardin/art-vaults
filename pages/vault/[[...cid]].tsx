@@ -267,7 +267,7 @@ export default function Vault() {
 
   const onDrop = useCallback(
     (files: FileWithPath[]) => {
-      set([...items, { name: files[0].name, file: files[0] }]);
+      set([...items, ...files.map((f) => ({ name: f.name, file: f }))]);
     },
     [items]
   );
