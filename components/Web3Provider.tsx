@@ -31,6 +31,43 @@ type Web3ProviderProps = {
   children: React.ReactNode;
 };
 
+export const mainnetInfura = new providers.StaticJsonRpcProvider(
+  process.env.NEXT_PUBLIC_INFURA_HTTP
+);
+
+export const getENSOrAddress = async (addr: string): Promise<string> => {
+  let name = addr;
+  const cachedVal = window.localStorage.getItem("ensCache_" + addr);
+  if (cachedVal) {
+    const cachedName: ENSCache = JSON.parse(cachedVal);
+    if (cachedName.timestamp > Date.now()) {
+      return cachedName.name;
+    }
+  }
+
+  // Check if we can find an ENS name associated with this account
+  try {
+    const reportedName = await mainnetInfura.lookupAddress(addr);
+    const resolvedAddress = await mainnetInfura.resolveName(reportedName);
+    if (
+      ethers.utils.getAddress(addr) === ethers.utils.getAddress(resolvedAddress)
+    ) {
+      name = reportedName;
+    }
+    // cache the ENS name to avoid querying the RPC too much
+    window.localStorage.setItem(
+      "ensCache_" + addr,
+      JSON.stringify({
+        timestamp: Date.now() + 360000,
+        name: reportedName,
+      })
+    );
+  } catch (e) {
+    console.log(e);
+  }
+  return name;
+};
+
 export default function Web3Provider({ children }: Web3ProviderProps) {
   const [provider, setProvider] = useState<Web3 | null>(null);
 
@@ -43,40 +80,9 @@ export default function Web3Provider({ children }: Web3ProviderProps) {
       address: account,
     };
 
-    const cachedVal = window.localStorage.getItem("ensCache_" + account);
-    if (cachedVal) {
-      const cachedName: ENSCache = JSON.parse(cachedVal);
-      if (cachedName.timestamp > Date.now()) {
-        defaultAcc.name = cachedName.name;
-        setProvider({
-          provider,
-          ethereum,
-          account: defaultAcc,
-        });
-        return;
-      }
-    }
-
-    // Check if we can find an ENS name associated with this account
-    try {
-      const reportedName = await provider.lookupAddress(account);
-      const resolvedAddress = await provider.resolveName(reportedName);
-      if (
-        ethers.utils.getAddress(account) ===
-        ethers.utils.getAddress(resolvedAddress)
-      ) {
-        defaultAcc.name = reportedName;
-      }
-      // cache the ENS name to avoid querying the RPC too much
-      window.localStorage.setItem(
-        "ensCache_" + account,
-        JSON.stringify({
-          timestamp: Date.now() + 360000,
-          name: reportedName,
-        })
-      );
-    } catch (e) {
-      console.log(e);
+    const name = await getENSOrAddress(account);
+    if (name !== account) {
+      defaultAcc.name = name;
     }
 
     setProvider({

@@ -11,6 +11,7 @@ import VaultIcon from "../components/VaultIcon";
 import { useWeb3 } from "../components/Web3Provider";
 import { ROOT, txtFetcher } from "../lib/fetchers";
 import GalleryItem from "../components/GalleryItem";
+import useAddress from "../components/useAddress";
 
 const formatAddress = (addr: string): string => {
   if (!addr) {
@@ -51,7 +52,7 @@ export default function Home() {
     document.body.dataset.theme = "light";
   }, []);
 
-  const isShareLink = !!vaultCID; //&& !web3.connected;
+  const isShareLink = !!vaultCID && !web3.connected;
 
   const { data: creator } = useSWR<string>(
     isShareLink ? vaultCID + "/username" : null,
@@ -61,6 +62,8 @@ export default function Home() {
     isShareLink ? vaultCID + "/preview" : null,
     txtFetcher
   );
+
+  const sharer = useAddress(creator ?? "");
 
   useEffect(() => {
     if (router.query.v) {
@@ -132,7 +135,7 @@ export default function Home() {
           deletable={false}
           onSelect={() => {}}
         />
-        <h2>{formatAddress(creator || "")} shared a vault with you</h2>
+        <h2>{sharer} shared a vault with you</h2>
         <p>
           This vault contains exclusive content. Connect your wallet to view its
           contents.
