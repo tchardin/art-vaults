@@ -162,9 +162,6 @@ export default function Vault() {
   }, [whitelist]);
 
   useEffect(() => {
-    if (web3.connected && !web3.account) {
-      replace("/");
-    }
     if (root?.[0]) {
       setSecured(true);
     }
@@ -201,7 +198,16 @@ export default function Vault() {
   const manageAccess = () => {
     setModal(modals.MANAGE_ACCESS);
   };
-  const selectPreview = () => {
+  const selectPreview = async () => {
+    if (!web3.connected) {
+      try {
+        await web3.connect();
+      } catch {
+        setErr("Metamask request cancelled");
+        setModal(modals.ERROR);
+        return;
+      }
+    }
     setModal(modals.SELECT_PREVIEW);
   };
   const confirmPreview = () => {
@@ -310,7 +316,7 @@ export default function Vault() {
         username={
           web3.account
             ? web3.account.name ?? web3.account.address
-            : "unavailable"
+            : "No Wallet Connected"
         }
       />
 
