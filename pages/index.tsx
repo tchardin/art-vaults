@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import useSWR from "swr";
 import styles from "../styles/Home.module.css";
 import Nav from "../components/Nav";
+import Footer from "../components/Footer";
 import Modal from "../components/Modal";
 import Button from "../components/Button";
 import VaultIcon from "../components/VaultIcon";
@@ -89,15 +90,15 @@ export default function Home() {
           Decentralized Storage for exclusive NFT content.{" "}
         </h1>
 
-        <Button text="Create Vault" onClick={startWallet} />
+        <Button text="Create Vault" onClick={newVault} />
 
         <div className={styles.grid}>
-          <div className={styles.card} onClick={startWallet}>
+          <div className={styles.card} onClick={newVault}>
             <h2>⬆️ Upload your artwork</h2>
             <p>Securely store all assets for a digital artwork in a vault.</p>
           </div>
 
-          <div className={styles.card} onClick={startWallet}>
+          <div className={styles.card} onClick={newVault}>
             <h2>🗝 Secure your Vault</h2>
             <p>
               Freeze your art piece, upload the assets to Filecoin and register
@@ -105,12 +106,12 @@ export default function Home() {
             </p>
           </div>
 
-          <div className={styles.card} onClick={startWallet}>
+          <div className={styles.card} onClick={newVault}>
             <h2>👀 Invite Viewers</h2>
             <p>Whitelist Ethereum accounts to get access to view your vault.</p>
           </div>
 
-          <div className={styles.card} onClick={startWallet}>
+          <div className={styles.card} onClick={newVault}>
             <h2>💰 Sell your vault </h2>
             <p>Distribute and sell your vault on NFT platforms.</p>
           </div>
@@ -154,9 +155,7 @@ export default function Home() {
         </p>
       </Modal>
 
-      <footer className={styles.footer}>
-        <p>This app is experimental, use at your own risk.</p>
-      </footer>
+      <Footer />
     </div>
   );
 }

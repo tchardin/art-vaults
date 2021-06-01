@@ -162,9 +162,6 @@ export default function Vault() {
   }, [whitelist]);
 
   useEffect(() => {
-    if (web3.connected && !web3.account) {
-      replace("/");
-    }
     if (root?.[0]) {
       setSecured(true);
     }
@@ -201,7 +198,16 @@ export default function Vault() {
   const manageAccess = () => {
     setModal(modals.MANAGE_ACCESS);
   };
-  const selectPreview = () => {
+  const selectPreview = async () => {
+    if (!web3.connected) {
+      try {
+        await web3.connect();
+      } catch {
+        setErr("Metamask request cancelled");
+        setModal(modals.ERROR);
+        return;
+      }
+    }
     setModal(modals.SELECT_PREVIEW);
   };
   const confirmPreview = () => {
@@ -310,7 +316,7 @@ export default function Vault() {
         username={
           web3.account
             ? web3.account.name ?? web3.account.address
-            : "unavailable"
+            : "No Wallet Connected"
         }
       />
 
@@ -499,17 +505,17 @@ export default function Vault() {
             <p className={styles.modalText}>
               Securing your vault will freeze your art piece, upload the assets
               to Filecoin Decentalized storage and register your vault as an NFT
-              on the Ethereum Blockchain.
+              on the Ethereum Blockchain. (Coming soon)
             </p>
             <ul className={styles.detailList}>
               <li>
                 <p>🎉 This will be irreversible</p>
               </li>
               <li>
-                <p>⛽ 0.0056ETH Network Fee</p>
+                <p>⛽ 0.0000ETH Network Fee</p>
               </li>
               <li>
-                <p>💾 0.0024ETH Storage Fee</p>
+                <p>💾 0.0000ETH Storage Fee</p>
               </li>
             </ul>
           </>
