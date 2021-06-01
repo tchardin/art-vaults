@@ -505,17 +505,17 @@ export default function Vault() {
             <p className={styles.modalText}>
               Securing your vault will freeze your art piece, upload the assets
               to Filecoin Decentalized storage and register your vault as an NFT
-              on the Ethereum Blockchain.
+              on the Ethereum Blockchain. (Coming soon)
             </p>
             <ul className={styles.detailList}>
               <li>
                 <p>🎉 This will be irreversible</p>
               </li>
               <li>
-                <p>⛽ 0.0056ETH Network Fee</p>
+                <p>⛽ 0.0000ETH Network Fee</p>
               </li>
               <li>
-                <p>💾 0.0024ETH Storage Fee</p>
+                <p>💾 0.0000ETH Storage Fee</p>
               </li>
             </ul>
           </>

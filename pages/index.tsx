@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import useSWR from "swr";
 import styles from "../styles/Home.module.css";
 import Nav from "../components/Nav";
+import Footer from "../components/Footer";
 import Modal from "../components/Modal";
 import Button from "../components/Button";
 import VaultIcon from "../components/VaultIcon";
@@ -154,9 +155,7 @@ export default function Home() {
         </p>
       </Modal>
 
-      <footer className={styles.footer}>
-        <p>This app is experimental, use at your own risk.</p>
-      </footer>
+      <Footer />
     </div>
   );
 }
