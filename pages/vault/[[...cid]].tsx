@@ -21,6 +21,7 @@ import { useWeb3 } from "../../components/Web3Provider";
 import Gallery from "../../components/Gallery";
 import GalleryItem, { VaultItem } from "../../components/GalleryItem";
 import { ROOT, jsonFetcher, txtFetcher } from "../../lib/fetchers";
+import { sendStoragePayment } from "../../lib/contracts";
 
 type ModalState =
   | "submit"
@@ -250,21 +251,26 @@ export default function Vault() {
     // artificial delay for now
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    const files: File[] = [];
-    items.forEach((item) => item.file && files.push(item.file));
+    /* const files: File[] = []; */
+    /* items.forEach((item) => item.file && files.push(item.file)); */
     try {
-      const root = await upload(files);
-      if (root) {
-        push("/vault/" + root);
-        setModal(modals.SUCCESS);
-        setSecured(true);
-        if (web3.account?.address) {
-          setLocalUser(web3.account?.address, root, []);
-        }
-      } else {
-        setErr("fail to upload");
-        setModal(modals.ERROR);
-      }
+      const root =
+        "bafy2bzacea42zgocdpg6kkuebxkgnp44nxrh6bn4ko477n46ompuegdsslkuu";
+
+      await sendStoragePayment(root);
+      // Uncomment when ready. Always show failure state for now
+      /* const root = await upload(files); */
+      /* if (root) { */
+      /*   push("/vault/" + root); */
+      /*   setModal(modals.SUCCESS); */
+      /*   setSecured(true); */
+      /*   if (web3.account?.address) { */
+      /*     setLocalUser(web3.account?.address, root, []); */
+      /*   } */
+      /* } else { */
+      setErr("fail to upload");
+      setModal(modals.ERROR);
+      /* } */
     } catch (e) {
       setErr(e.toString());
       setModal(modals.ERROR);
