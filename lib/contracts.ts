@@ -6,39 +6,30 @@ export async function sendStoragePayment(cid: string): Promise<void> {
 
   const signer = provider.getSigner();
 
-  // You can also use an ENS name for the contract address
-  const daiAddress = "dai.tokens.ethers.eth";
+  const contract = "0x151eF14b490B14c2Fd7F2716D734E55df3434920";
 
   // The ERC-20 Contract ABI, which is a common contract interface
   // for tokens (this is the Human-Readable ABI format)
-  const daiAbi = [
-    // Some details about the token
-    "function name() view returns (string)",
-    "function symbol() view returns (string)",
-
-    // Get the account balance
-    "function balanceOf(address) view returns (uint)",
-
-    // Send some of your tokens to someone else
-    "function transfer(address to, uint amount)",
+  const myelAbi = [
+    // Pay storage fee and mint and NFT
+    "function payStorageFeeMint(string memory cid) payable",
 
     // An event triggered whenever anyone transfers to someone else
-    "event Transfer(address indexed from, address indexed to, uint amount)",
+    "event LogDeposit(address sender, uint amount, string cid)"
   ];
 
   // The Contract object
-  const daiContract = new Contract(daiAddress, daiAbi, provider);
+  const myelContract = new Contract(contract, myelAbi, provider);
 
-  // The DAI Contract is currently connected to the Provider,
+  // The MYEL Contract is currently connected to the Provider,
   // which is read-only. You need to connect to a Signer, so
   // that you can pay to send state-changing transactions.
-  const daiWithSigner = daiContract.connect(signer);
-
-  // Each DAI has 18 decimal places
-  const dai = utils.parseUnits("1.0", 18);
+  const myelWithSigner = myelContract.connect(signer);
 
   // Send 1 DAI to "ricmoo.firefly.eth"
-  const tx = daiWithSigner.transfer("ricmoo.firefly.eth", dai);
+  const tx = myelWithSigner.payStorageFeeMint(cid, {
+    value: utils.parseEther("0.1")
+});
 
   // etc
 }
